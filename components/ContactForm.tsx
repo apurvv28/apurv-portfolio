@@ -6,12 +6,12 @@ import { Mail, Github, Linkedin, Send, ArrowUpRight, Clock3, MapPin, Sparkles } 
 import { motion } from "framer-motion";
 
 const socials = [
-  { label: "Email", icon: Mail, href: "mailto:apurv@example.com", value: "apurv@example.com" },
+  { label: "Email", icon: Mail, href: "mailto:apurvsaktepar2806@gmail.com", value: "apurvsaktepar2806@gmail.com" },
   { label: "GitHub", icon: Github, href: "https://github.com/apurvv28", value: "@apurvv28" },
   { label: "LinkedIn", icon: Linkedin, href: "https://www.linkedin.com/in/apurv-saktepar-054a17281/", value: "Apurv Saktepar" }
 ];
 
-const CONTACT_EMAIL = "apurv@example.com";
+const CONTACT_EMAIL = "apurvsaktepar2806@gmail.com";
 
 type FormState = {
   name: string;
