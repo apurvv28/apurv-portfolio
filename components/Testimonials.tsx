@@ -14,14 +14,14 @@ const testimonials = [
     role: "CEO, iBid Logistics Pvt. Ltd., Solapur",
     quote:
       "Strong architecture instincts, great communication, and a bias for shipping. Apurv consistently turns ideas into production-grade outcomes.",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Guide"
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Man"
   },
   {
     name: "Darshan Dodal",
     role: "CEO, Bits and Volts Pvt. Ltd., Pune",
     quote:
       "Apurv is a skilled frontend developer with a strong sense of design and user experience. As a intern he delivered high-quality work and was a valuable asset to our team.",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=CEO"
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Male"
   }
 ];
 
