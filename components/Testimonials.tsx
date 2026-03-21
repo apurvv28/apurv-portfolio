@@ -6,22 +6,22 @@ const testimonials = [
     name: "Pranjal Bannore",
     role: "Senior Cloud Architect, TCS Pune",
     quote:
-      "Apurv brings rare depth in both AI systems and product execution. He shipped complex workflows that our team now depends on daily.",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Apurv"
+      "Apurv brings high communication skills, a strong sence of leadership and a deep understanding of software architecture. He consistently delivers high-quality work.",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Expert"
   },
   {
     name: "Pritam Chhanchure",
     role: "CEO, iBid Logistics Pvt. Ltd., Solapur",
     quote:
       "Strong architecture instincts, great communication, and a bias for shipping. Apurv consistently turns ideas into production-grade outcomes.",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mentor"
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Guide"
   },
   {
     name: "Darshan Dodal",
     role: "CEO, Bits and Volts Pvt. Ltd., Pune",
     quote:
-      "From feature strategy to implementation speed, working with Apurv felt seamless. The attention to performance and usability stood out.",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Design"
+      "Apurv is a skilled frontend developer with a strong sense of design and user experience. As a intern he delivered high-quality work and was a valuable asset to our team.",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=CEO"
   }
 ];
 
