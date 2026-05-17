@@ -10,16 +10,16 @@ export default function Footer(): JSX.Element {
         </div>
 
         <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
-          <Link className="transition hover:text-cyan-400" href="/about">
+          <Link className="transition hover:text-cyan-400" href="#about">
             About
           </Link>
-          <Link className="transition hover:text-cyan-400" href="/work">
+          <Link className="transition hover:text-cyan-400" href="#work">
             Work
           </Link>
-          <Link className="transition hover:text-cyan-400" href="/blog">
+          <Link className="transition hover:text-cyan-400" href="#blog">
             Blog
           </Link>
-          <Link className="transition hover:text-cyan-400" href="/contact">
+          <Link className="transition hover:text-cyan-400" href="#contact">
             Contact
           </Link>
         </div>
