@@ -32,7 +32,7 @@ export default function AboutSection(): JSX.Element {
             My work centers on building <span className="font-medium text-[var(--text-main)]">AI-powered applications</span> such as RAG pipelines and multi-agent systems orchestrated with LangGraph and CrewAI, on top of a full-stack foundation in React, Next.js, FastAPI, and Node.js. On the infrastructure side, I work across AWS and GCP with Docker, Kubernetes, and Terraform for deployment and DevOps.
           </p>
           <p>
-            That shows up in projects like <span className="font-medium text-[var(--text-main)]">SamayVidya</span>, a six-agent scheduling system adopted by VIT Pune&apos;s CSE-AI department; <span className="font-medium text-[var(--text-main)]">EMR 2.0</span>, a voice-first medical documentation platform built on a seven-agent pipeline; and <span className="font-medium text-[var(--text-main)]">DevForge</span>, a multi-LLM CI/CD generator I published to npm. Along the way I&apos;ve led winning teams at Code Apex 2.0, Smart India Hackathon, and placed at Cavista Technologies and IMPETUS Project Expo.
+            That shows up in projects like <span className="font-medium text-[var(--text-main)]">SamayVidya</span>, a six-agent scheduling system adopted by VIT Pune&apos;s CSE-AI department; <span className="font-medium text-[var(--text-main)]">EMR 2.0</span>, a voice-first medical documentation platform built on a seven-agent pipeline; and <span className="font-medium text-[var(--text-main)]">DevForge</span>, a multi-LLM CI/CD generator I published to npm. Along the way I&apos;ve led winning teams at Code Apex 2.0, Smart India Hackathon, Cavista Technologies Hackathon, and PICT IMPETUS Project Expo.
           </p>
         </div>
       </motion.div>
