@@ -37,14 +37,7 @@ export const skills: Skill[] = [
     category: "tech"
   },
   {
-    name: "TypeScript",
-    color: "from-blue-600 to-blue-400",
-    description: "Type-safe JavaScript for scalable applications.",
-    iconType: "typescript",
-    category: "tech"
-  },
-  {
-    name: "Node.js",
+    name: "Node.js/Express",
     color: "from-green-600 to-emerald-500",
     description: "Scalable backend runtime for APIs and services.",
     iconType: "nodejs",
@@ -64,13 +57,13 @@ export const skills: Skill[] = [
     iconType: "fastapi",
     category: "tech"
   },
-  {
-    name: "Spring Boot",
-    color: "from-green-700 to-green-500",
-    description: "Robust Java backend framework for enterprise apps.",
-    iconType: "springboot",
-    category: "tech"
-  },
+  // {
+  //   name: "Spring Boot",
+  //   color: "from-green-700 to-green-500",
+  //   description: "Robust Java backend framework for enterprise apps.",
+  //   iconType: "springboot",
+  //   category: "tech"
+  // },
   {
     name: "LangGraph",
     color: "from-purple-500 to-pink-500",
@@ -78,13 +71,13 @@ export const skills: Skill[] = [
     iconType: "langgraph",
     category: "tech"
   },
-  {
-    name: "CrewAI",
-    color: "from-indigo-500 to-purple-500",
-    description: "Designing and managing autonomous AI agents.",
-    iconType: "crewai",
-    category: "tech"
-  },
+  // {
+  //   name: "CrewAI",
+  //   color: "from-indigo-500 to-purple-500",
+  //   description: "Designing and managing autonomous AI agents.",
+  //   iconType: "crewai",
+  //   category: "tech"
+  // },
   {
     name: "Docker",
     color: "from-blue-500 to-cyan-600",
@@ -106,13 +99,13 @@ export const skills: Skill[] = [
     iconType: "gcp",
     category: "tech"
   },
-  {
-    name: "PostgreSQL",
-    color: "from-blue-600 to-blue-400",
-    description: "Advanced relational database for complex queries.",
-    iconType: "postgresql",
-    category: "tech"
-  },
+  // {
+  //   name: "PostgreSQL",
+  //   color: "from-blue-600 to-blue-400",
+  //   description: "Advanced relational database for complex queries.",
+  //   iconType: "postgresql",
+  //   category: "tech"
+  // },
   {
     name: "MySQL",
     color: "from-blue-500 to-orange-500",
@@ -134,20 +127,20 @@ export const skills: Skill[] = [
     iconType: "github",
     category: "tech"
   },
-  {
-    name: "Tailwind CSS",
-    color: "from-cyan-400 to-blue-500",
-    description: "Utility-first CSS for rapid UI development.",
-    iconType: "tailwind",
-    category: "tech"
-  },
-  {
-    name: "Generative AI",
-    color: "from-pink-500 to-purple-600",
-    description: "Developing LLM-powered applications and workflows.",
-    iconType: "genai",
-    category: "tech"
-  },
+  // {
+  //   name: "Tailwind CSS",
+  //   color: "from-cyan-400 to-blue-500",
+  //   description: "Utility-first CSS for rapid UI development.",
+  //   iconType: "tailwind",
+  //   category: "tech"
+  // },
+  // {
+  //   name: "Generative AI",
+  //   color: "from-pink-500 to-purple-600",
+  //   description: "Developing LLM-powered applications and workflows.",
+  //   iconType: "genai",
+  //   category: "tech"
+  // },
   {
     name: "Scikit-Learn",
     color: "from-purple-600 to-indigo-500",
@@ -162,18 +155,46 @@ export const skills: Skill[] = [
     iconType: "pandas",
     category: "tech"
   },
+  // {
+  //   name: "TensorFlow",
+  //   color: "from-purple-600 to-indigo-500",
+  //   description: "Building intelligent models for predictions and insights.",
+  //   iconType: "tensorflow",
+  //   category: "tech"
+  // },
+  // {
+  //   name: "PyTorch",
+  //   color: "from-purple-600 to-indigo-500",
+  //   description: "Building intelligent models for predictions and insights.",
+  //   iconType: "pytorch",
+  //   category: "tech"
+  // },
   {
-    name: "TensorFlow",
+    name: "Kubernetes",
     color: "from-purple-600 to-indigo-500",
     description: "Building intelligent models for predictions and insights.",
-    iconType: "tensorflow",
+    iconType: "kubernetes",
     category: "tech"
   },
   {
-    name: "PyTorch",
+    name: "Jenkins",
     color: "from-purple-600 to-indigo-500",
     description: "Building intelligent models for predictions and insights.",
-    iconType: "pytorch",
+    iconType: "jenkins",
+    category: "tech"
+  },
+  {
+    name: "Terraform",
+    color: "from-purple-600 to-indigo-500",
+    description: "Building intelligent models for predictions and insights.",
+    iconType: "terraform",
+    category: "tech"
+  },
+  {
+    name: "Ansible",
+    color: "from-purple-600 to-indigo-500",
+    description: "Building intelligent models for predictions and insights.",
+    iconType: "ansible",
     category: "tech"
   },
   // Soft Skills
