@@ -1,0 +1,283 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { CloudUpload, LoaderCircle, Plus, X } from "lucide-react";
+import Toast from "@/components/ui/Toast";
+import { cn } from "@/lib/utils";
+import type { BlogRecord, BlogStatus } from "@/lib/blog-storage";
+
+type BlogEditorClientProps = {
+  mode: "create" | "edit";
+  initialBlog?: Partial<BlogRecord>;
+};
+
+type BlogFormState = {
+  title: string;
+  slug: string;
+  coverImage: string;
+  tags: string[];
+  tagInput: string;
+  excerpt: string;
+  content: string;
+  status: BlogStatus;
+};
+
+const AUTOSAVE_PREFIX = "portfolio-blog-draft";
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+}
+
+function formatClock(date = new Date()): string {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClientProps): JSX.Element {
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [slugTouched, setSlugTouched] = useState(mode === "edit");
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error"; visible: boolean }>({
+    message: "",
+    type: "success",
+    visible: false
+  });
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+
+  const [form, setForm] = useState<BlogFormState>(() => ({
+    title: initialBlog?.title ?? "",
+    slug: initialBlog?.slug ?? "",
+    coverImage: initialBlog?.coverImage ?? "/images/magic-object.png",
+    tags: initialBlog?.tags ?? [],
+    tagInput: "",
+    excerpt: initialBlog?.excerpt ?? "",
+    content: initialBlog?.content ?? "",
+    status: initialBlog?.status ?? "draft"
+  }));
+
+  const autosaveKey = useMemo(() => `${AUTOSAVE_PREFIX}:${mode}:${initialBlog?.slug ?? "new"}`, [mode, initialBlog?.slug]);
+
+  useEffect(() => {
+    const raw = localStorage.getItem(autosaveKey);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as Partial<BlogFormState>;
+        setForm((current) => ({
+          ...current,
+          ...parsed,
+          tagInput: "",
+          tags: parsed.tags ?? current.tags
+        }));
+      } catch {
+        // ignore stale drafts
+      }
+    }
+  }, [autosaveKey]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      localStorage.setItem(autosaveKey, JSON.stringify(form));
+      setSavedAt(formatClock());
+    }, 10000);
+
+    return () => window.clearInterval(timer);
+  }, [autosaveKey, form]);
+
+  const setField = <K extends keyof BlogFormState>(key: K, value: BlogFormState[K]) => {
+    setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const addTag = () => {
+    const nextTag = form.tagInput.trim();
+    if (!nextTag) return;
+    setForm((current) => ({
+      ...current,
+      tags: Array.from(new Set([...current.tags, nextTag])),
+      tagInput: ""
+    }));
+  };
+
+  const removeTag = (tag: string) => {
+    setForm((current) => ({
+      ...current,
+      tags: current.tags.filter((item) => item !== tag)
+    }));
+  };
+
+  const uploadCover = async (file: File) => {
+    const data = new FormData();
+    data.append("file", file);
+
+    const response = await fetch("/api/blogs/upload", { method: "POST", body: data });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "Upload failed.");
+    setField("coverImage", payload.url as string);
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const payload = {
+        title: form.title,
+        slug: form.slug,
+        coverImage: form.coverImage,
+        tags: form.tags,
+        excerpt: form.excerpt,
+        content: form.content,
+        status: form.status,
+        updatedAt: new Date().toISOString(),
+        publishedAt: initialBlog?.publishedAt ?? new Date().toISOString()
+      };
+
+      const endpoint = mode === "create" ? "/api/blogs" : `/api/blogs/${initialBlog?.slug}`;
+      const response = await fetch(endpoint, {
+        method: mode === "create" ? "POST" : "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to save blog.");
+
+      localStorage.removeItem(autosaveKey);
+      setToast({ message: "Blog saved successfully.", type: "success", visible: true });
+
+      const savedBlog = result.blog as BlogRecord;
+      if (mode === "create") {
+        router.replace(`/admin/dashboard/edit/${savedBlog.slug}`);
+      } else if (savedBlog.slug !== initialBlog?.slug) {
+        router.replace(`/admin/dashboard/edit/${savedBlog.slug}`);
+      } else {
+        router.refresh();
+      }
+    } catch (error) {
+      setToast({
+        message: error instanceof Error ? error.message : "Unable to save blog.",
+        type: "error",
+        visible: true
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.24em] text-foreground-subtle">Blog Editor</p>
+          <h2 className="mt-2 font-heading text-2xl text-foreground sm:text-3xl">{mode === "create" ? "New Blog" : "Edit Blog"}</h2>
+        </div>
+        <Link href="/admin/dashboard" className="font-mono text-xs uppercase tracking-[0.22em] text-foreground-muted hover:text-foreground">
+          Back to dashboard
+        </Link>
+      </div>
+
+      <div className="mt-6 grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="space-y-4">
+          <label className="block space-y-2">
+            <span className="font-mono text-xs uppercase tracking-[0.22em] text-foreground-subtle">Title</span>
+            <input value={form.title} onChange={(event) => {
+              const nextTitle = event.target.value;
+              setField("title", nextTitle);
+              if (!slugTouched) setField("slug", slugify(nextTitle));
+            }} className="neu-pressed w-full rounded-2xl px-4 py-3 text-sm text-foreground outline-none" placeholder="Enter a blog title" />
+          </label>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block space-y-2">
+              <span className="font-mono text-xs uppercase tracking-[0.22em] text-foreground-subtle">Slug</span>
+              <input value={form.slug} onChange={(event) => { setSlugTouched(true); setField("slug", slugify(event.target.value)); }} className="neu-pressed w-full rounded-2xl px-4 py-3 text-sm text-foreground outline-none" placeholder="auto-generated-slug" />
+            </label>
+            <label className="block space-y-2">
+              <span className="font-mono text-xs uppercase tracking-[0.22em] text-foreground-subtle">Status</span>
+              <button type="button" onClick={() => setField("status", form.status === "draft" ? "published" : "draft")} className="neu-raised flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm text-foreground">
+                <span>{form.status === "draft" ? "Draft" : "Published"}</span>
+                <span className={cn("inline-flex h-5 w-9 items-center rounded-full p-0.5", form.status === "draft" ? "bg-surface-mid" : "bg-foreground") }>
+                  <span className={cn("h-4 w-4 rounded-full bg-surface-base transition-transform", form.status === "published" && "translate-x-4")} />
+                </span>
+              </button>
+            </label>
+          </div>
+
+          <label className="block space-y-2">
+            <span className="font-mono text-xs uppercase tracking-[0.22em] text-foreground-subtle">Cover Image</span>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={async (event) => { const file = event.target.files?.[0]; if (file) await uploadCover(file); }} className="hidden" />
+            <button type="button" onClick={() => fileInputRef.current?.click()} className="glass-panel flex w-full flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-[var(--glass-border-strong)] px-6 py-8 text-center text-sm text-foreground-muted">
+              <CloudUpload className="h-7 w-7" />
+              <span>Drop image here or browse</span>
+              {form.coverImage ? <img src={form.coverImage} alt="Cover preview" className="mt-2 h-28 w-full rounded-2xl object-cover" /> : null}
+            </button>
+          </label>
+
+          <div className="space-y-2">
+            <span className="font-mono text-xs uppercase tracking-[0.22em] text-foreground-subtle">Tags</span>
+            <div className="neu-pressed rounded-2xl px-4 py-3">
+              <div className="flex flex-wrap gap-2">
+                {form.tags.map((tag) => (
+                  <button key={tag} type="button" onClick={() => removeTag(tag)} className="neu-flat inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-foreground">
+                    {tag}
+                    <X className="h-3 w-3" />
+                  </button>
+                ))}
+                <input value={form.tagInput} onChange={(event) => setField("tagInput", event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addTag(); } }} placeholder="Type and press Enter" className="min-w-[10rem] flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-foreground-subtle" />
+              </div>
+            </div>
+          </div>
+
+          <label className="block space-y-2">
+            <span className="flex items-center justify-between font-mono text-xs uppercase tracking-[0.22em] text-foreground-subtle">
+              Excerpt <span>{form.excerpt.length}/240</span>
+            </span>
+            <textarea value={form.excerpt} onChange={(event) => setField("excerpt", event.target.value)} rows={4} className="neu-pressed w-full rounded-2xl px-4 py-3 text-sm text-foreground outline-none" placeholder="Short summary for cards and metadata" />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="font-mono text-xs uppercase tracking-[0.22em] text-foreground-subtle">Content</span>
+            <textarea value={form.content} onChange={(event) => setField("content", event.target.value)} rows={14} className="neu-pressed w-full rounded-3xl px-4 py-4 font-mono text-sm text-foreground outline-none" placeholder="# Write your markdown here" />
+          </label>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="font-mono text-caption uppercase tracking-[0.18em] text-foreground-subtle">
+              {savedAt ? `Draft saved locally at ${savedAt}` : "Autosaves every 10 seconds"}
+            </p>
+            <button type="button" onClick={handleSave} disabled={loading} className="neu-raised inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-mono text-xs uppercase tracking-[0.24em] text-foreground disabled:opacity-60">
+              {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              Save Blog
+            </button>
+          </div>
+        </div>
+
+        <div className="glass-panel-strong rounded-[2rem] p-5">
+          <div className="flex items-center justify-between">
+            <p className="font-mono text-xs uppercase tracking-[0.22em] text-foreground-subtle">Live Preview</p>
+            <span className="font-mono text-caption uppercase tracking-[0.18em] text-foreground-subtle">{form.status}</span>
+          </div>
+          <div className="blog-preview mt-4 rounded-3xl border border-[var(--glass-border)] bg-surface-secondary p-5">
+            <h3 className="font-heading text-2xl text-foreground">{form.title || "Untitled transmission"}</h3>
+            <p className="mt-2 text-sm text-foreground-muted">{form.excerpt || "Your excerpt will appear here."}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {form.tags.map((tag) => <span key={tag} className="neu-flat rounded-full px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-foreground">{tag}</span>)}
+            </div>
+            <div className="blog-preview-content mt-6">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{form.content || "Start writing markdown to see the live preview."}</ReactMarkdown>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Toast message={toast.message} type={toast.type} visible={toast.visible} onDismiss={() => setToast((current) => ({ ...current, visible: false }))} />
+    </section>
+  );
+}

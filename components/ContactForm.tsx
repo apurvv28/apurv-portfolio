@@ -1,227 +1,219 @@
 "use client";
 
-import { type ChangeEvent, type FormEvent, useState } from "react";
-import Link from "next/link";
-import { Mail, Github, Linkedin, Send, ArrowUpRight, Clock3, MapPin, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
-
-const socials = [
-  { label: "Email", icon: Mail, href: "mailto:apurvsaktepar2806@gmail.com", value: "apurvsaktepar2806@gmail.com" },
-  { label: "GitHub", icon: Github, href: "https://github.com/apurvv28", value: "@apurvv28" },
-  { label: "LinkedIn", icon: Linkedin, href: "https://www.linkedin.com/in/apurv-saktepar-054a17281/", value: "Apurv Saktepar" }
-];
+import { type FormEvent, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Mail, Github, Linkedin, MapPin, Rocket } from "lucide-react";
+import SectionLabel from "@/components/ui/SectionLabel";
+import FloatingInput from "@/components/ui/FloatingInput";
+import Toast from "@/components/ui/Toast";
 
 const CONTACT_EMAIL = "apurvsaktepar2806@gmail.com";
 
-type FormState = {
+const channels = [
+  {
+    label: "Email",
+    value: CONTACT_EMAIL,
+    href: `mailto:${CONTACT_EMAIL}`,
+    icon: Mail
+  },
+  {
+    label: "GitHub",
+    value: "@apurvv28",
+    href: "https://github.com/apurvv28",
+    icon: Github
+  },
+  {
+    label: "LinkedIn",
+    value: "Apurv Saktepar",
+    href: "https://www.linkedin.com/in/apurv-saktepar-054a17281/",
+    icon: Linkedin
+  }
+];
+
+type FormFields = {
   name: string;
   email: string;
-  subject: string;
   message: string;
 };
 
-const initialFormState: FormState = {
-  name: "",
-  email: "",
-  subject: "",
-  message: ""
-};
+type FormErrors = Partial<Record<keyof FormFields, string>>;
+
+const initialFields: FormFields = { name: "", email: "", message: "" };
+
+function validate(fields: FormFields): FormErrors {
+  const errors: FormErrors = {};
+  if (!fields.name.trim()) errors.name = "Name is required";
+  if (!fields.email.trim()) errors.email = "Email is required";
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email))
+    errors.email = "Enter a valid email address";
+  if (!fields.message.trim()) errors.message = "Message is required";
+  else if (fields.message.trim().length < 10)
+    errors.message = "Message must be at least 10 characters";
+  return errors;
+}
 
 export default function ContactForm(): JSX.Element {
-  const [formState, setFormState] = useState<FormState>(initialFormState);
-  const [isSending, setIsSending] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [fields, setFields] = useState<FormFields>(initialFields);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isLaunching, setIsLaunching] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const reducedMotion = useReducedMotion();
 
-  const onInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
-    const { name, value } = event.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
-  };
+  const onSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    const nextErrors = validate(fields);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setToast({ message: "Check the highlighted fields before launch.", type: "error" });
+      return;
+    }
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>): void => {
-    event.preventDefault();
-    setIsSending(true);
+    setIsLaunching(true);
+    const subject = `Portfolio inquiry from ${fields.name}`;
+    const body = [`Name: ${fields.name}`, `Email: ${fields.email}`, "", fields.message].join("\n");
+    const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-    const subjectLine = formState.subject.trim() || "Portfolio inquiry";
-    const body = [
-      `Name: ${formState.name}`,
-      `Email: ${formState.email}`,
-      "",
-      formState.message
-    ].join("\n");
-
-    const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(body)}`;
+    await new Promise((r) => setTimeout(r, reducedMotion ? 200 : 900));
     window.location.href = mailto;
 
-    setTimeout(() => {
-      setIsSending(false);
-      setIsSubmitted(true);
-      setFormState(initialFormState);
-    }, 300);
+    setIsLaunching(false);
+    setFields(initialFields);
+    setToast({ message: "Transmission sent — your email client should open shortly.", type: "success" });
   };
 
   return (
-    <section id="contact" className="relative mx-auto mt-24 max-w-7xl px-6 pb-20 sm:mt-32 sm:pb-32">
-      <div className="pointer-events-none absolute inset-x-6 top-0 -z-10 h-64 rounded-[2rem] bg-[radial-gradient(circle_at_20%_20%,rgba(6,182,212,0.16),transparent_60%),radial-gradient(circle_at_80%_40%,rgba(16,185,129,0.12),transparent_55%)] blur-2xl" />
-
+    <section id="contact" className="relative mx-auto mt-24 max-w-6xl px-6 pb-16 sm:mt-32 sm:pb-24">
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ duration: 0.8 }}
-        className="glass-card overflow-hidden rounded-[2.5rem] border border-cyan-500/20 bg-[#050a12]/75 p-3 sm:p-4"
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.7 }}
       >
-        <div className="grid gap-3 lg:grid-cols-12">
-          <div className="relative overflow-hidden rounded-[1.8rem] border border-cyan-500/20 bg-[linear-gradient(155deg,#0c2230_0%,#081723_42%,#050912_100%)] p-8 sm:p-10 lg:col-span-5">
-            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-400/15 blur-3xl" />
+        <SectionLabel index="08. CONTACT" title="Mission Control" kicker="COMMS CHANNEL" />
 
-            <p className="inline-flex items-center gap-2 rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-[10px] font-semibold tracking-[0.24em] text-cyan-300 uppercase sm:text-xs">
-              <Sparkles size={14} />
-              Start A Project
-            </p>
-
-            <h2 className="mt-6 text-3xl font-bold leading-[1.05] text-white sm:text-4xl lg:text-5xl">
-              Let&apos;s turn your next idea into a fast, polished product.
-            </h2>
-
-            <p className="mt-5 max-w-md text-sm leading-relaxed text-cyan-50/75 sm:text-base">
-              Available for product builds, performance-focused frontend engineering, and AI-first feature work.
-            </p>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] text-cyan-200/80 uppercase">
-                  <Clock3 size={14} />
-                  Response Time
-                </p>
-                <p className="mt-2 text-sm text-white">Within 24 hours</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] text-cyan-200/80 uppercase">
-                  <MapPin size={14} />
-                  Location
-                </p>
-                <p className="mt-2 text-sm text-white">India, Remote Worldwide</p>
-              </div>
-            </div>
-
-            <div className="mt-8 space-y-3">
-              {socials.map((social) => (
-                <motion.a
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  whileHover={{ x: 4 }}
-                  className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/85 transition-colors hover:border-cyan-400/30 hover:bg-cyan-400/10"
-                >
-                  <span className="flex items-center gap-3">
-                    <social.icon size={16} className="text-cyan-300" />
-                    <span>
-                      <span className="font-semibold">{social.label}</span>
-                      <span className="ml-2 text-cyan-100/70">{social.value}</span>
-                    </span>
-                  </span>
-                  <ArrowUpRight size={15} className="text-cyan-200/60 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                </motion.a>
-              ))}
-            </div>
-
-            <Link
-              href="/resume/apurv.pdf"
-              target="_blank"
-              className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-xs font-semibold tracking-[0.14em] text-cyan-100 uppercase transition-colors hover:border-cyan-300/40 hover:text-white"
-            >
-              View Resume
-              <ArrowUpRight size={14} />
-            </Link>
-          </div>
-
-          <div className="rounded-[1.8rem] border border-white/10 bg-[#070e18]/90 p-8 sm:p-10 lg:col-span-7">
-            <div className="mb-7">
-              <p className="text-[10px] font-semibold tracking-[0.24em] text-cyan-300/80 uppercase sm:text-xs">Send Details</p>
-              <h3 className="mt-3 text-2xl font-bold text-white sm:text-3xl">Share your brief and timeline</h3>
-              <p className="mt-3 max-w-xl text-sm leading-relaxed text-[var(--text-muted)] sm:text-base">
-                Use the form below and I&apos;ll draft a clear plan with scope, stack, and milestones.
+        <div className="glass-panel-strong glass-scrim grid gap-8 rounded-[2rem] p-6 sm:p-8 lg:grid-cols-2 lg:gap-12 lg:p-10">
+          {/* Left — contact channels */}
+          <div className="space-y-6">
+            <div>
+              <p className="font-mono text-caption uppercase tracking-[0.22em] text-foreground-subtle">
+                Open Channel
+              </p>
+              <p className="mt-3 text-body-sm leading-relaxed text-foreground-muted">
+                Available for internships, freelance builds, and full-time opportunities. Response
+                within 24 hours.
               </p>
             </div>
 
-            <form className="space-y-5" onSubmit={onSubmit} aria-label="Contact form">
-              <div className="grid gap-5 sm:grid-cols-2">
-                <label className="block">
-                  <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Name</span>
-                  <input
-                    name="name"
-                    value={formState.name}
-                    onChange={onInputChange}
-                    aria-label="Name"
-                    required
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3.5 text-sm text-white placeholder-zinc-600 outline-none transition-all focus:border-cyan-400/40 focus:bg-cyan-400/[0.03]"
-                    placeholder="Your full name"
-                  />
-                </label>
+            <div className="flex items-center gap-3 neu-flat w-fit rounded-full px-4 py-2">
+              <MapPin className="h-3.5 w-3.5 text-foreground-muted" strokeWidth={1.5} />
+              <span className="font-mono text-caption text-foreground-muted">Pune, India · Remote</span>
+            </div>
 
-                <label className="block">
-                  <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Email</span>
-                  <input
-                    name="email"
-                    value={formState.email}
-                    onChange={onInputChange}
-                    aria-label="Email"
-                    type="email"
-                    required
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3.5 text-sm text-white placeholder-zinc-600 outline-none transition-all focus:border-cyan-400/40 focus:bg-cyan-400/[0.03]"
-                    placeholder="name@company.com"
-                  />
-                </label>
-              </div>
-
-              <label className="block">
-                <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Subject</span>
-                <input
-                  name="subject"
-                  value={formState.subject}
-                  onChange={onInputChange}
-                  aria-label="Subject"
-                  className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3.5 text-sm text-white placeholder-zinc-600 outline-none transition-all focus:border-cyan-400/40 focus:bg-cyan-400/[0.03]"
-                  placeholder="Landing page build, dashboard redesign, AI feature integration..."
-                />
-              </label>
-
-              <label className="block">
-                <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Message</span>
-                <textarea
-                  name="message"
-                  value={formState.message}
-                  onChange={onInputChange}
-                  aria-label="Message"
-                  rows={6}
-                  required
-                  className="w-full resize-none rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 text-sm text-white placeholder-zinc-600 outline-none transition-all focus:border-cyan-400/40 focus:bg-cyan-400/[0.03]"
-                  placeholder="Tell me goals, timeline, constraints, and anything important about the product."
-                />
-              </label>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-zinc-500">Submitting opens your email app with all details prefilled.</p>
-                {isSubmitted && (
-                  <p className="text-xs font-medium text-emerald-300">Draft created. Looking forward to your message.</p>
-                )}
-              </div>
-
-              <motion.button
-                type="submit"
-                whileHover={{ scale: 1.01, y: -1 }}
-                whileTap={{ scale: 0.99 }}
-                disabled={isSending}
-                className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full border border-cyan-300/40 bg-[linear-gradient(90deg,#ecfeff_0%,#a5f3fc_35%,#67e8f9_100%)] px-8 py-4 text-sm font-bold text-slate-900 transition-all hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                <Send size={16} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                {isSending ? "Preparing Draft..." : "Send Inquiry"}
-              </motion.button>
-            </form>
+            <ul className="space-y-3">
+              {channels.map((ch, i) => (
+                <motion.li
+                  key={ch.label}
+                  initial={{ opacity: 0, x: -12 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.06, duration: 0.4 }}
+                >
+                  <a
+                    href={ch.href}
+                    target={ch.href.startsWith("http") ? "_blank" : undefined}
+                    rel={ch.href.startsWith("http") ? "noreferrer" : undefined}
+                    className="neu-raised group flex items-center gap-4 rounded-2xl px-4 py-3.5 transition-transform hover:-translate-y-0.5 active:neu-pressed"
+                  >
+                    <span className="neu-flat flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+                      <ch.icon className="h-4 w-4 text-foreground-muted" strokeWidth={1.5} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block font-mono text-[10px] uppercase tracking-[0.18em] text-foreground-subtle">
+                        {ch.label}
+                      </span>
+                      <span className="block truncate text-body-sm text-foreground">{ch.value}</span>
+                    </span>
+                  </a>
+                </motion.li>
+              ))}
+            </ul>
           </div>
+
+          {/* Right — form */}
+          <form onSubmit={onSubmit} noValidate className="space-y-5" aria-label="Contact form">
+            <FloatingInput
+              label="Name"
+              name="name"
+              value={fields.name}
+              onChange={(e) => setFields((f) => ({ ...f, name: e.target.value }))}
+              error={errors.name}
+              autoComplete="name"
+            />
+            <FloatingInput
+              label="Email"
+              name="email"
+              type="email"
+              value={fields.email}
+              onChange={(e) => setFields((f) => ({ ...f, email: e.target.value }))}
+              error={errors.email}
+              autoComplete="email"
+            />
+            <FloatingInput
+              label="Message"
+              name="message"
+              multiline
+              rows={5}
+              value={fields.message}
+              onChange={(e) => setFields((f) => ({ ...f, message: e.target.value }))}
+              error={errors.message}
+            />
+
+            <motion.button
+              type="submit"
+              disabled={isLaunching}
+              whileTap={{ scale: 0.98 }}
+              className="neu-raised group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-full px-8 py-4 font-heading text-body-sm font-semibold text-foreground transition-all hover:-translate-y-0.5 disabled:opacity-60 active:neu-pressed"
+            >
+              {isLaunching ? (
+                <>
+                  <motion.span
+                    animate={reducedMotion ? undefined : { y: [0, -6, 0] }}
+                    transition={{ duration: 0.6, repeat: Infinity }}
+                  >
+                    <Rocket className="h-4 w-4" strokeWidth={1.5} />
+                  </motion.span>
+                  <span>Launching…</span>
+                  <motion.span
+                    className="h-1 w-16 overflow-hidden rounded-full bg-surface-mid"
+                    aria-hidden="true"
+                  >
+                    <motion.span
+                      className="block h-full bg-foreground/30"
+                      animate={{ x: ["-100%", "100%"] }}
+                      transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                      style={{ width: "50%" }}
+                    />
+                  </motion.span>
+                </>
+              ) : (
+                <>
+                  <Rocket className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" strokeWidth={1.5} />
+                  Launch Transmission
+                </>
+              )}
+            </motion.button>
+          </form>
         </div>
       </motion.div>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          visible={Boolean(toast)}
+          onDismiss={() => setToast(null)}
+        />
+      )}
     </section>
   );
 }

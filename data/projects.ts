@@ -2,33 +2,22 @@ export type Project = {
   title: string;
   description: string;
   category: string;
+  tags: ("AI-ML" | "Full-Stack" | "DevOps")[];
   stack: string[];
   image: string;
   github: string;
   demo: string;
   features?: string[];
-  color?: string;
 };
+
+export const projectFilters = ["All", "AI-ML", "Full-Stack", "DevOps"] as const;
+export type ProjectFilter = (typeof projectFilters)[number];
 
 export const projects: Project[] = [
   {
-    title: "StudyGenie",
-    category: "AI / EdTech Platform",
-    description: "An AI-powered learning platform with an intelligent chatbot, personalized roadmaps, and performance analytics for students transitioning into technical education.",
-    features: [
-      "Intelligent Chatbot for 24/7 learning assistance",
-      "Personalized Learning Roadmaps tailored to student needs",
-      "Performance Analytics to track and improve learning outcomes"
-    ],
-    stack: ["MERN", "Python", "LangGraph", "LLM APIs"],
-    image: "/projects/studygenie.png",
-    github: "https://github.com/apurvv28/studygenie",
-    demo: "No demo",
-    color: "#5158b0ff"
-  },
-  {
     title: "EMR 2.0",
     category: "AI + Healthcare",
+    tags: ["AI-ML", "Full-Stack"],
     description: "A smart electronic medical record platform using a 7+ AI agent workflow to automate patient documentation and support diagnosis.",
     features: [
       "7+ AI Agent Workflow for complex medical tasks",
@@ -38,12 +27,27 @@ export const projects: Project[] = [
     stack: ["FastAPI", "Next.js", "Llama", "CrewAI", "LangGraph", "Clerk", "Convex"],
     image: "/projects/emr.png",
     github: "https://github.com/apurvv28/cavista-hack-techtadkaa",
-    demo: "https://cavista-hack-techtadkaa.vercel.app/",
-    color: "#901616b9"
+    demo: "https://cavista-hack-techtadkaa.vercel.app/"
+  },
+  {
+    title: "PIE",
+    category: "ML Risk Intelligence",
+    tags: ["AI-ML"],
+    description: "A real-time pre-delinquency intervention platform that scores transaction events with a dual-model XGBoost + LightGBM ensemble.",
+    features: [
+      "10K+ transaction events processed with sub-second delinquency scoring",
+      "Dual-model XGBoost + LightGBM ensemble trained on 25+ behavioral risk features",
+      "FastAPI, Redis, and React pipeline with automated drift monitoring"
+    ],
+    stack: ["XGBoost", "LightGBM", "Pandas", "React", "FastAPI", "Redis", "SQLite"],
+    image: "/projects/pie.png",
+    github: "https://github.com/apurvv28/Pre-Delinquency-Intervention-System",
+    demo: "NA"
   },
   {
     title: "ResearchMind",
     category: "AI Research Tool",
+    tags: ["AI-ML", "Full-Stack"],
     description: "An AI research assistant that analyzes academic papers, summarizes key findings, and drafts structured literature reviews.",
     features: [
       "Automated Analysis of academic papers and journals",
@@ -53,12 +57,12 @@ export const projects: Project[] = [
     stack: ["Python", "LLM APIs", "Vector Search", "Next.js"],
     image: "/projects/researchmind.png",
     github: "https://github.com/apurvv28/ResearchMind-Literature_Survey_Tool",
-    demo: "https://researchmind-io.vercel.app",
-    color: "#27fdb2ff"
+    demo: "https://researchmind-io.vercel.app"
   },
   {
     title: "SamayVidya",
     category: "AI Productivity Tool",
+    tags: ["AI-ML", "Full-Stack"],
     description: "An intelligent scheduler that creates adaptive study plans from deadlines, subject difficulty, and availability constraints.",
     features: [
       "Adaptive Study Plans based on real-time progress",
@@ -68,42 +72,27 @@ export const projects: Project[] = [
     stack: ["React", "Node.js", "Scheduling Algorithms", "Analytics"],
     image: "/projects/samayvidya.png",
     github: "https://github.com/apurvv28/samayvidya",
-    demo: "https://samayvidya.vercel.app",
-    color: "#800bf5ff"
+    demo: "https://samayvidya.vercel.app"
   },
   {
-    title: "Accident Detection System",
-    category: "Computer Vision / Safety Tech",
-    description: "A safety platform that detects accidents in real time and auto-sends emergency alerts with GPS location sharing.",
+    title: "DevForge",
+    category: "AI-Powered CI/CD",
+    tags: ["DevOps", "Full-Stack"],
+    description: "A production-ready CLI tool that generates CI/CD workflows and infrastructure plans using a multi-LLM agentic pipeline.",
     features: [
-      "Real-time Accident Detection using computer vision",
-      "Automated Emergency Alerts to nearest responders",
-      "GPS Location Sharing for precise rescue operations"
+      "Auto-detects frameworks across 6+ stacks",
+      "Generates GitHub Actions and Jenkins workflows with one command",
+      "Includes NIST SP 800-53 and ISO 27001 compliance scanning"
     ],
-    stack: ["Python", "IoT Sensors", "Machine Learning", "Real-time Alerts"],
-    image: "/projects/accident.png",
-    github: "https://github.com/apurvv28/Accident-Detection-DL",
-    demo: "NA",
-    color: "#ef4444"
-  },
-  {
-    title: "DSA Viz",
-    category: "Educational Tool",
-    description: "An interactive platform for visualizing algorithms and data structures through step-by-step animations and complexity insights.",
-    features: [
-      "Interactive Visualizations for 20+ algorithms",
-      "Step-by-step Animations for better understanding",
-      "Complexity Insights and efficiency analysis"
-    ],
-    stack: ["React", "JavaScript", "D3.js", "Animation"],
-    image: "/projects/dsaviz.png",
-    github: "https://github.com/apurvv28/ADSAA",
-    demo: "https://dsa-vit.vercel.app",
-    color: "#f8e00dff"
+    stack: ["TypeScript", "LangGraph", "Amazon Bedrock", "GitHub Actions", "Terraform", "Docker"],
+    image: "/projects/devforge.png",
+    github: "https://github.com/apurvv28/devforge",
+    demo: "https://www.npmjs.com/package/@apurvv28/devforge"
   },
   {
     title: "Placify",
     category: "Career Tech Platform",
+    tags: ["Full-Stack"],
     description: "A placement preparation platform with company-wise tracks, coding modules, and interview prep analytics.",
     features: [
       "Company-wise Tracks for targeted preparation",
@@ -113,7 +102,6 @@ export const projects: Project[] = [
     stack: ["React", "Node.js", "MongoDB", "Dashboard"],
     image: "/projects/placify.png",
     github: "https://github.com/apurvv28/placify",
-    demo: "https://placify-ai.vercel.app",
-    color: "#4a0df3ff"
-  },
+    demo: "https://placify-ai.vercel.app"
+  }
 ];

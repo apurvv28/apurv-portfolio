@@ -102,6 +102,12 @@ Update these files to customize:
 - `components/ContactForm.tsx` for real social/email links
 - `app/layout.tsx` metadata for final domain and social preview details
 
+## Admin Blog Setup
+
+- Generate the local admin password hash with `npm run admin:set-password`.
+- The generated `config/admin-credentials.json` file is required locally and must never be committed.
+- Blog content is file-based under `content/blogs/*.md`.
+
 ## Performance Notes
 
 - Optimized image rendering via Next.js Image component

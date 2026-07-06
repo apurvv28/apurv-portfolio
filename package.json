@@ -6,19 +6,27 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "admin:set-password": "node scripts/set-admin-password.js",
+    "admin:verify": "node scripts/verify-admin-password.js"
   },
   "dependencies": {
     "@react-three/drei": "^9.120.0",
     "@react-three/fiber": "^8.17.6",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "framer-motion": "^11.15.0",
+    "gray-matter": "^4.0.3",
     "lenis": "^1.1.20",
     "lucide-react": "^0.475.0",
     "next": "^16.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.3.0",
+    "react-markdown": "^10.1.0",
+    "remark": "^15.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-html": "^16.0.1",
     "tailwind-merge": "^2.6.0",
     "three": "^0.160.0"
   },

@@ -1,13 +1,30 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { DM_Sans, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SmoothScroll from "@/components/SmoothScroll";
 import AnimatedCursor from "@/components/AnimatedCursor";
+import Providers from "@/components/Providers";
+import ThemeToggle from "@/components/ThemeToggle";
 import "../styles/globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  display: "swap"
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap"
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap"
+});
 
 const siteUrl = "https://apurvv.vercel.app";
 
@@ -45,20 +62,25 @@ export const metadata: Metadata = {
   ]
 };
 
+const themeInitScript = `(function(){try{var t=localStorage.getItem('portfolio-theme');var d=t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);if(!d)document.documentElement.classList.add('light');}catch(e){document.documentElement.classList.add('dark');}})();`;
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>): JSX.Element {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${playfair.variable} min-h-screen bg-[var(--bg)] text-[var(--text-main)] antialiased`}>
-        <div className="aurora-bg">
-          <div className="aurora-1" />
-          <div className="aurora-2" />
-          <div className="aurora-3" />
-        </div>
-        <AnimatedCursor />
-        <SmoothScroll />
-        <Header />
-        <main>{children}</main>
-        <Footer />
+    <html lang="en" suppressHydrationWarning className="dark">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body
+        className={`${spaceGrotesk.variable} ${dmSans.variable} ${jetbrainsMono.variable} min-h-screen bg-surface text-foreground antialiased`}
+      >
+        <Providers>
+          <AnimatedCursor />
+          <SmoothScroll />
+          <ThemeToggle />
+          <Header />
+          <main className="relative z-content">{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
