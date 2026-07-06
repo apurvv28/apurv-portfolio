@@ -8,7 +8,7 @@ import CountUp from "@/components/ui/CountUp";
 const STATS = [
   { label: "CGPA", value: 9.52, decimals: 2, suffix: "" },
   { label: "Internships", value: 2, decimals: 0, suffix: "" },
-  { label: "Projects", value: 4, decimals: 0, suffix: "" },
+  { label: "Projects", value: 6, decimals: 0, suffix: "" },
   { label: "Recognitions", value: 5, decimals: 0, suffix: "" }
 ];
 
@@ -45,7 +45,7 @@ function MissionPatch(): JSX.Element {
       {/* Mission patch label */}
       <div className="neu-flat absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1">
         <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground-muted">
-          SDE-01
+          APURV
         </span>
       </div>
     </div>
