@@ -106,6 +106,7 @@ Update these files to customize:
 
 - Generate the local admin password hash with `npm run admin:set-password`.
 - The generated `config/admin-credentials.json` file is required locally and must never be committed.
+- For Vercel deployment, store the same JSON payload in your Vercel Blob store and set `ADMIN_CREDENTIALS_BLOB_URL` to that blob's public URL so the login route reads credentials from Blob in production.
 - Blog content is file-based under `content/blogs/*.md`.
 
 ## Performance Notes

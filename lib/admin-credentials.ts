@@ -8,14 +8,31 @@ export type AdminCredentials = {
 };
 
 const CREDENTIALS_PATH = path.join(process.cwd(), "config", "admin-credentials.json");
+const CREDENTIALS_BLOB_URL = process.env.ADMIN_CREDENTIALS_BLOB_URL?.trim();
 
 export function getAdminCredentialsPath(): string {
   return CREDENTIALS_PATH;
 }
 
+async function readCredentialsPayload(): Promise<string> {
+  if (CREDENTIALS_BLOB_URL) {
+    const response = await fetch(CREDENTIALS_BLOB_URL, { cache: "no-store" });
+
+    if (!response.ok) {
+      throw new Error(
+        `Unable to read admin credentials from blob URL (${response.status} ${response.statusText}).`
+      );
+    }
+
+    return response.text();
+  }
+
+  return fs.readFile(CREDENTIALS_PATH, "utf8");
+}
+
 export async function readAdminCredentials(): Promise<AdminCredentials> {
   try {
-    const raw = await fs.readFile(CREDENTIALS_PATH, "utf8");
+    const raw = await readCredentialsPayload();
     const parsed = JSON.parse(raw) as Partial<AdminCredentials>;
 
     if (!parsed.passwordHash || !parsed.updatedAt) {
@@ -28,7 +45,9 @@ export async function readAdminCredentials(): Promise<AdminCredentials> {
     };
   } catch (error) {
     throw new Error(
-      `Admin credentials file is missing or invalid at ${CREDENTIALS_PATH}. Run npm run admin:set-password to create it locally.`
+      CREDENTIALS_BLOB_URL
+        ? `Admin credentials blob is missing or invalid at ${CREDENTIALS_BLOB_URL}. Make sure the Vercel Blob object contains the JSON payload with passwordHash and updatedAt.`
+        : `Admin credentials file is missing or invalid at ${CREDENTIALS_PATH}. Run npm run admin:set-password to create it locally.`
     );
   }
 }
