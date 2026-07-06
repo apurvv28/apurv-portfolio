@@ -1,6 +1,6 @@
 # Premium Developer Portfolio
 
-A cinematic, minimal, performance-focused developer portfolio for **Apurv Saktepar** built with Next.js App Router, TypeScript, Tailwind CSS, and Framer Motion.
+A cinematic, minimal, performance-focused developer portfolio for **Apurv Saktepar**  built with Next.js App Router, TypeScript, Tailwind CSS, and Framer Motion.
 
 ## Tech Stack
 
