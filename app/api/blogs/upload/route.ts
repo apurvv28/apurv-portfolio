@@ -3,6 +3,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-auth";
+import { isS3Configured, uploadS3Image } from "@/lib/s3-storage";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "blogs");
 
@@ -48,14 +49,28 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "File is too large." }, { status: 413 });
   }
 
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-
   const filename = `${randomUUID()}${getExtension(file)}`;
-  const filePath = path.join(UPLOAD_DIR, filename);
-  await fs.writeFile(filePath, Buffer.from(await file.arrayBuffer()));
+  let fileUrl = "";
+
+  if (isS3Configured()) {
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      fileUrl = await uploadS3Image(filename, buffer, file.type);
+    } catch (error: any) {
+      return NextResponse.json(
+        { error: `Failed to upload to S3: ${error.message}` },
+        { status: 500 }
+      );
+    }
+  } else {
+    await fs.mkdir(UPLOAD_DIR, { recursive: true });
+    const filePath = path.join(UPLOAD_DIR, filename);
+    await fs.writeFile(filePath, Buffer.from(await file.arrayBuffer()));
+    fileUrl = `/uploads/blogs/${filename}`;
+  }
 
   return NextResponse.json({
-    url: `/uploads/blogs/${filename}`,
+    url: fileUrl,
     filename
   });
 }

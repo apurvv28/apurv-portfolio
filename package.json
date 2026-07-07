@@ -11,6 +11,7 @@
     "admin:verify": "node scripts/verify-admin-password.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1080.0",
     "@react-three/drei": "^9.120.0",
     "@react-three/fiber": "^8.17.6",
     "bcryptjs": "^3.0.3",

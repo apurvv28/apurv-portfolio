@@ -1,3 +1,4 @@
 node_modules/
 .next/
 config/admin-credentials.json
+.env

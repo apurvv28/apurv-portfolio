@@ -5,6 +5,15 @@ import matter from "gray-matter";
 import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkHtml from "remark-html";
+import { HeadObjectCommand } from "@aws-sdk/client-s3";
+import {
+  isS3Configured,
+  readS3Blog,
+  writeS3Blog,
+  deleteS3Blog,
+  listS3Blogs,
+  getS3Client
+} from "./s3-storage";
 
 export type BlogStatus = "draft" | "published";
 
@@ -108,14 +117,64 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
+let migrationPromise: Promise<void> | null = null;
+export async function ensureS3Migrated(): Promise<void> {
+  if (!isS3Configured()) return;
+  if (!migrationPromise) {
+    migrationPromise = (async () => {
+      try {
+        const s3Blogs = await listS3Blogs();
+        if (s3Blogs.length === 0) {
+          const localFiles = await listBlogFiles();
+          for (const filePath of localFiles) {
+            const slug = path.basename(filePath, ".md");
+            const content = await fs.readFile(filePath, "utf8");
+            await writeS3Blog(slug, content);
+          }
+        }
+      } catch (error) {
+        console.error("Error migrating local blogs to S3:", error);
+      }
+    })();
+  }
+  return migrationPromise;
+}
+
+async function blogExists(slug: string): Promise<boolean> {
+  if (isS3Configured()) {
+    await ensureS3Migrated();
+    try {
+      const client = getS3Client();
+      const command = new HeadObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET!,
+        Key: `blogs/${slug}.md`
+      });
+      await client.send(command);
+      return true;
+    } catch (error: any) {
+      if (
+        error.name === "NotFound" ||
+        error.name === "NoSuchKey" ||
+        error.$metadata?.httpStatusCode === 404
+      ) {
+        return false;
+      }
+      throw error;
+    }
+  }
+  return fileExists(getBlogFilePath(slug));
+}
+
 export async function generateUniqueSlug(baseTitle: string, excludeSlug?: string): Promise<string> {
-  await ensureBlogDir();
+  if (!isS3Configured()) {
+    await ensureBlogDir();
+  }
 
   const baseSlug = toSlugBase(baseTitle) || `blog-${randomUUID().slice(0, 8)}`;
   let slug = baseSlug;
   let counter = 2;
 
-  while (await fileExists(getBlogFilePath(slug)) && slug !== excludeSlug) {
+  while (await blogExists(slug) && slug !== excludeSlug) {
     slug = `${baseSlug}-${counter}`;
     counter += 1;
   }
@@ -168,25 +227,48 @@ export async function listBlogFiles(): Promise<string[]> {
 }
 
 export async function readBlogBySlug(slug: string): Promise<BlogRecord | null> {
-  const filePath = getBlogFilePath(slug);
+  let raw: string | null = null;
 
-  if (!(await fileExists(filePath))) return null;
+  if (isS3Configured()) {
+    await ensureS3Migrated();
+    raw = await readS3Blog(slug);
+  } else {
+    const filePath = getBlogFilePath(slug);
+    if (await fileExists(filePath)) {
+      raw = await fs.readFile(filePath, "utf8");
+    }
+  }
 
-  const raw = await fs.readFile(filePath, "utf8");
+  if (!raw) return null;
+
   const parsed = parseBlogMarkdown(raw);
   parsed.html = await renderMarkdownToHtml(parsed.content);
   return parsed;
 }
 
 export async function listBlogs(options: { includeDrafts?: boolean } = {}): Promise<BlogSummary[]> {
-  const records = await Promise.all(
-    (await listBlogFiles()).map(async (filePath) => {
-      const raw = await fs.readFile(filePath, "utf8");
-      const blog = parseBlogMarkdown(raw);
-      blog.html = await renderMarkdownToHtml(blog.content);
-      return blog;
-    })
-  );
+  let records: BlogRecord[];
+
+  if (isS3Configured()) {
+    await ensureS3Migrated();
+    const s3Blogs = await listS3Blogs();
+    records = await Promise.all(
+      s3Blogs.map(async ({ content }) => {
+        const blog = parseBlogMarkdown(content);
+        blog.html = await renderMarkdownToHtml(blog.content);
+        return blog;
+      })
+    );
+  } else {
+    records = await Promise.all(
+      (await listBlogFiles()).map(async (filePath) => {
+        const raw = await fs.readFile(filePath, "utf8");
+        const blog = parseBlogMarkdown(raw);
+        blog.html = await renderMarkdownToHtml(blog.content);
+        return blog;
+      })
+    );
+  }
 
   const filtered = options.includeDrafts ? records : records.filter((blog) => blog.status === "published");
 
@@ -196,14 +278,28 @@ export async function listBlogs(options: { includeDrafts?: boolean } = {}): Prom
 }
 
 export async function listBlogRecords(options: { includeDrafts?: boolean } = {}): Promise<BlogRecord[]> {
-  const records = await Promise.all(
-    (await listBlogFiles()).map(async (filePath) => {
-      const raw = await fs.readFile(filePath, "utf8");
-      const blog = parseBlogMarkdown(raw);
-      blog.html = await renderMarkdownToHtml(blog.content);
-      return blog;
-    })
-  );
+  let records: BlogRecord[];
+
+  if (isS3Configured()) {
+    await ensureS3Migrated();
+    const s3Blogs = await listS3Blogs();
+    records = await Promise.all(
+      s3Blogs.map(async ({ content }) => {
+        const blog = parseBlogMarkdown(content);
+        blog.html = await renderMarkdownToHtml(blog.content);
+        return blog;
+      })
+    );
+  } else {
+    records = await Promise.all(
+      (await listBlogFiles()).map(async (filePath) => {
+        const raw = await fs.readFile(filePath, "utf8");
+        const blog = parseBlogMarkdown(raw);
+        blog.html = await renderMarkdownToHtml(blog.content);
+        return blog;
+      })
+    );
+  }
 
   return options.includeDrafts ? records : records.filter((blog) => blog.status === "published");
 }
@@ -248,8 +344,6 @@ function serializeBlog(blog: BlogRecord): string {
 }
 
 export async function createBlog(input: Required<Pick<BlogInput, "title" | "content">> & BlogInput): Promise<BlogRecord> {
-  await ensureBlogDir();
-
   const slug = await generateUniqueSlug(input.slug || input.title);
   const now = new Date().toISOString();
   const blog: BlogRecord = {
@@ -266,7 +360,14 @@ export async function createBlog(input: Required<Pick<BlogInput, "title" | "cont
     readTimeMinutes: Math.max(1, Math.ceil(countWords(input.content) / 200))
   };
 
-  await fs.writeFile(getBlogFilePath(blog.slug), serializeBlog(blog), "utf8");
+  const serialized = serializeBlog(blog);
+  if (isS3Configured()) {
+    await writeS3Blog(blog.slug, serialized);
+  } else {
+    await ensureBlogDir();
+    await fs.writeFile(getBlogFilePath(blog.slug), serialized, "utf8");
+  }
+
   blog.html = await renderMarkdownToHtml(blog.content);
   return blog;
 }
@@ -295,12 +396,20 @@ export async function updateBlog(
     readTimeMinutes: Math.max(1, Math.ceil(countWords(nextContent) / 200))
   };
 
-  const currentFile = getBlogFilePath(slug);
-  const nextFile = getBlogFilePath(nextBlog.slug);
+  const serialized = serializeBlog(nextBlog);
+  if (isS3Configured()) {
+    await writeS3Blog(nextBlog.slug, serialized);
+    if (nextBlog.slug !== slug) {
+      await deleteS3Blog(slug);
+    }
+  } else {
+    const currentFile = getBlogFilePath(slug);
+    const nextFile = getBlogFilePath(nextBlog.slug);
 
-  await fs.writeFile(nextFile, serializeBlog(nextBlog), "utf8");
-  if (nextFile !== currentFile) {
-    await fs.unlink(currentFile);
+    await fs.writeFile(nextFile, serialized, "utf8");
+    if (nextFile !== currentFile) {
+      await fs.unlink(currentFile);
+    }
   }
 
   nextBlog.html = await renderMarkdownToHtml(nextBlog.content);
@@ -308,6 +417,10 @@ export async function updateBlog(
 }
 
 export async function deleteBlog(slug: string): Promise<boolean> {
+  if (isS3Configured()) {
+    return deleteS3Blog(slug);
+  }
+
   const filePath = getBlogFilePath(slug);
   if (!(await fileExists(filePath))) return false;
   await fs.unlink(filePath);
@@ -318,7 +431,7 @@ export async function ensureBlogSeed(blog: BlogInput): Promise<void> {
   const slug = blog.slug || (blog.title ? toSlugBase(blog.title) : "");
   if (!slug) return;
 
-  if (await fileExists(getBlogFilePath(slug))) return;
+  if (await blogExists(slug)) return;
   if (!blog.title || !blog.content) return;
 
   await createBlog({

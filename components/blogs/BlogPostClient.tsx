@@ -12,7 +12,7 @@ type BlogPostClientProps = {
 };
 
 function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+  return new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
 
 export default function BlogPostClient({ blog, related }: BlogPostClientProps): JSX.Element {
@@ -53,7 +53,7 @@ export default function BlogPostClient({ blog, related }: BlogPostClientProps): 
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/55 to-black/85" />
         <div className="absolute inset-0 flex items-end">
           <div className="mx-auto w-full max-w-5xl px-4 pb-10 sm:px-6 lg:px-8">
-            <div className="glass-panel-strong max-w-3xl rounded-[2rem] p-6 sm:p-8">
+            <div className="glass-panel-strong dark:bg-black/40 max-w-3xl rounded-[2rem] p-6 sm:p-8">
               <Link href="/blogs" className="inline-flex items-center gap-2 font-mono text-caption uppercase tracking-[0.22em] text-foreground-muted hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" /> Back to blogs
               </Link>

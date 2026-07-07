@@ -11,7 +11,7 @@ type BlogsIndexClientProps = { blogs: BlogSummary[] };
 const PAGE_SIZE = 6;
 
 function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 export default function BlogsIndexClient({ blogs }: BlogsIndexClientProps): JSX.Element {
