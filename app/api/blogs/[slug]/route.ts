@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-auth";
 import { deleteBlog, readBlogBySlug, updateBlog, validateBlogInput } from "@/lib/blog-storage";
+import { notifySubscribers } from "@/lib/email-notifier";
 
 async function isAdminRequest(request: Request): Promise<boolean> {
   const token = request.headers.get("cookie")
@@ -43,6 +44,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ slug
       return NextResponse.json({ error: errors[0], errors }, { status: 400 });
     }
 
+    const existing = await readBlogBySlug(slug);
+
     const blog = await updateBlog(slug, {
       title: body.title,
       slug: body.slug,
@@ -63,6 +66,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ slug
     revalidatePath(`/blogs/${slug}`);
     revalidatePath(`/blogs/${blog.slug}`);
     revalidatePath("/admin/dashboard");
+
+    if (existing && existing.status === "draft" && blog.status === "published") {
+      await notifySubscribers(blog);
+    }
 
     return NextResponse.json({ blog });
   } catch (error) {

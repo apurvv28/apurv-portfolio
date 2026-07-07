@@ -23,6 +23,40 @@ export default function BlogsIndexClient({ blogs }: BlogsIndexClientProps): JSX.
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  const [subscribeEmail, setSubscribeEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [subscribeStatus, setSubscribeStatus] = useState<{ message: string; type: "success" | "error" }>({
+    message: "",
+    type: "success"
+  });
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subscribeEmail) return;
+
+    setSubmitting(true);
+    setSubscribeStatus({ message: "", type: "success" });
+
+    try {
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: subscribeEmail })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to subscribe.");
+      }
+
+      setSubscribeStatus({ message: data.message || "Subscribed successfully!", type: "success" });
+      setSubscribeEmail("");
+    } catch (error: any) {
+      setSubscribeStatus({ message: error.message || "Failed to subscribe.", type: "error" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     const timer = window.setTimeout(() => setQuery(queryInput.trim().toLowerCase()), 250);
     return () => window.clearTimeout(timer);
@@ -72,6 +106,34 @@ export default function BlogsIndexClient({ blogs }: BlogsIndexClientProps): JSX.
           <p className="font-mono text-xs uppercase tracking-[0.28em] text-foreground-subtle">// TRANSMISSIONS LOG</p>
           <h1 className="mt-3 font-heading text-4xl text-foreground sm:text-5xl">Blogs</h1>
           <p className="mt-3 max-w-2xl text-sm text-foreground-muted sm:text-base">Notes, breakdowns, and field reports from the build process.</p>
+
+          <div className="mt-6 border-t border-[var(--glass-border)] pt-6">
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-foreground-subtle">Subscribe to updates</p>
+            <form onSubmit={handleSubscribe} className="mt-3 flex flex-col gap-3 sm:flex-row max-w-md">
+              <label className="neu-pressed flex flex-1 items-center gap-3 rounded-2xl px-4 py-2.5">
+                <input
+                  type="email"
+                  required
+                  value={subscribeEmail}
+                  onChange={(event) => setSubscribeEmail(event.target.value)}
+                  className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-foreground-subtle"
+                  placeholder="Enter your email address"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="neu-raised rounded-2xl px-5 py-2.5 font-mono text-xs uppercase tracking-[0.2em] text-foreground hover:-translate-y-0.5 disabled:opacity-50"
+              >
+                {submitting ? "Subscribing..." : "Subscribe"}
+              </button>
+            </form>
+            {subscribeStatus.message && (
+              <p className={`mt-2 text-xs font-mono ${subscribeStatus.type === "success" ? "text-green-400" : "text-red-400"}`}>
+                {subscribeStatus.message}
+              </p>
+            )}
+          </div>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_auto_auto]">
             <label className="neu-pressed flex items-center gap-3 rounded-2xl px-4 py-3">
