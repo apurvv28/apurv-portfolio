@@ -27,6 +27,7 @@ export async function getSubscribers(): Promise<string[]> {
     } catch (e) {
       console.error("Failed to read subscribers from Vercel Blob:", e);
     }
+    return []; // Bypass local filesystem read when Vercel Blob is active
   }
 
   // Local fallback
@@ -51,12 +52,14 @@ export async function addSubscriber(email: string): Promise<boolean> {
         access: "public",
         addRandomSuffix: false
       });
+      return true; // Return immediately to bypass local filesystem write when Vercel Blob is active
     } catch (e) {
       console.error("Failed to write subscribers to Vercel Blob:", e);
+      throw new Error("Unable to save subscriber to Vercel Blob.");
     }
   }
 
-  // Always save locally as copy/fallback
+  // Local save as copy/fallback in development
   await ensureConfigDir();
   await fs.writeFile(SUBSCRIBERS_PATH, JSON.stringify(listData, null, 2), "utf8");
   return true;
