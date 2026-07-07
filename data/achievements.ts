@@ -14,7 +14,7 @@ export const achievements: Achievement[] = [
     id: "code-apex",
     name: "Code Apex 2.0",
     event: "National Coding Competition",
-    result: "Winning Team Lead",
+    result: "Winning Agentic AI Track",
     icon: Trophy
   },
   {
@@ -28,14 +28,14 @@ export const achievements: Achievement[] = [
     id: "cavista",
     name: "Cavista Technologies Hackathon",
     event: "Healthcare Tech Hackathon",
-    result: "Winner — EMR 2.0",
+    result: "Second Runners Up — EMR 2.0",
     icon: Award
   },
   {
     id: "impetus",
     name: "PICT IMPETUS Project Expo",
     event: "Project Exhibition",
-    result: "Winning Presentation",
+    result: "Runners Up",
     icon: Star
   },
   {

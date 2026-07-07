@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-const ROLES = ["AI/ML Engineer", "Full-Stack Developer", "Competitive Programmer"];
+const ROLES = ["AI/ML Engineer", "Full-Stack Developer", "DevOps & Cloud Enthusiast"];
 
 const TYPE_SPEED = 55;
 const DELETE_SPEED = 35;
