@@ -29,22 +29,71 @@ export async function notifySubscribers(blog: BlogRecord): Promise<void> {
     });
 
     const emailHtml = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #000; color: #fff; border: 1px solid #333; border-radius: 10px;">
-        <h2 style="color: #fff; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px;">New Transmission from Apurv Saktepar</h2>
-        <div style="padding: 20px 0;">
-          <h3 style="color: #fff; font-size: 24px; margin-top: 0;">${blog.title}</h3>
-          <p style="color: #a3a3a3; font-size: 16px; line-height: 1.6;">${blog.excerpt}</p>
-          <div style="text-align: center; margin-top: 30px;">
-            <a href="https://apurvv.vercel.app/blogs/${blog.slug}" style="background-color: #fff; color: #000; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 5px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Read Post</a>
-          </div>
+  <div style="font-family: 'Courier New', monospace; max-width: 600px; margin: 0 auto; padding: 30px; background: radial-gradient(ellipse at center, #0a0e27 0%, #000000 100%); border: 1px solid #2a2a5a; border-radius: 15px; box-shadow: 0 0 40px rgba(100, 100, 255, 0.1);">
+    
+    <!-- Stars background decoration -->
+    <div style="position: relative; overflow: hidden;">
+      <div style="position: absolute; top: 10px; left: 20px; font-size: 8px; color: #ffffff; opacity: 0.3; letter-spacing: 5px;">✦ ✧ ✦ ✧ ✦</div>
+      <div style="position: absolute; bottom: 10px; right: 20px; font-size: 8px; color: #ffffff; opacity: 0.2; letter-spacing: 8px;">✦ ✧ ✦ ✧</div>
+      
+      <!-- Header with astronaut emoji -->
+      <div style="text-align: center; padding: 10px 0 20px 0; border-bottom: 1px solid rgba(100, 149, 237, 0.3);">
+        <div style="font-size: 40px; margin-bottom: 5px;">🚀</div>
+        <h2 style="color: #7eb8ff; font-family: 'Courier New', monospace; font-size: 18px; letter-spacing: 3px; text-transform: uppercase; margin: 0; text-shadow: 0 0 20px rgba(100, 149, 237, 0.3);">
+          ⚡ NEW BLOG PUBLISHED ⚡
+        </h2>
+        <p style="color: #6a8caf; font-size: 12px; margin: 5px 0 0 0; letter-spacing: 1px; font-family: 'Courier New', monospace;">
+          ▸ From the Desk of Apurv Saktepar ◂
+        </p>
+      </div>
+      
+      <!-- Main content -->
+      <div style="padding: 25px 15px; position: relative;">
+        <!-- Decorative orbit rings -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; height: 80%; border: 1px solid rgba(100, 149, 237, 0.05); border-radius: 50%;"></div>
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; height: 90%; border: 1px solid rgba(100, 149, 237, 0.03); border-radius: 50%;"></div>
+        
+        <!-- Astronaut icon -->
+        <div style="text-align: center; font-size: 32px; margin-bottom: 10px;">🧑‍🚀</div>
+        
+        <h3 style="color: #b8d8ff; font-family: 'Courier New', monospace; font-size: 22px; margin: 10px 0 15px 0; text-align: center; text-shadow: 0 0 30px rgba(100, 149, 237, 0.2); letter-spacing: 1px;">
+          ${blog.title}
+        </h3>
+        
+        <div style="height: 2px; background: linear-gradient(to right, transparent, #4a6a9a, transparent); margin: 15px 0; width: 60%; margin-left: auto; margin-right: auto;"></div>
+        
+        <p style="color: #a0c4e8; font-size: 15px; line-height: 1.8; text-align: center; font-family: 'Courier New', monospace; padding: 0 10px;">
+          ${blog.excerpt}
+        </p>
+        
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="https://apurvv.me/blogs/${blog.slug}" style="display: inline-block; background: linear-gradient(135deg, #4a6a9a, #2a4a7a); color: #ffffff; padding: 14px 35px; text-decoration: none; font-family: 'Courier New', monospace; font-weight: bold; border-radius: 30px; font-size: 13px; text-transform: uppercase; letter-spacing: 2px; border: 1px solid #6a8abf; box-shadow: 0 0 30px rgba(100, 149, 237, 0.2); transition: all 0.3s ease;">
+            🛸 Read Full Blog
+          </a>
         </div>
-        <div style="border-top: 1px solid #333; padding-top: 15px; text-align: center; font-size: 12px; color: #737373;">
-          You received this because you subscribed to Apurv Saktepar's Portfolio.
+        
+        <!-- Small satellite decoration -->
+        <div style="text-align: center; margin-top: 20px; font-size: 14px; color: #4a6a8a; letter-spacing: 4px;">
+          ● ◯ ● ◯ ●
         </div>
       </div>
-    `;
+      
+      <!-- Footer -->
+      <div style="border-top: 1px solid rgba(100, 149, 237, 0.2); padding-top: 18px; text-align: center; font-size: 11px; color: #4a6a7a; font-family: 'Courier New', monospace; letter-spacing: 1px;">
+        <div style="margin-bottom: 5px;">📡 RECEIVED VIA DEEP SPACE NETWORK</div>
+        <div style="color: #3a5a6a; font-size: 10px;">
+          You received this interstellar transmission because you're orbiting<br>
+          Apurv Saktepar's Portfolio. Stay curious, space traveler. ✦
+        </div>
+        <div style="margin-top: 10px; font-size: 8px; color: #2a4a5a; letter-spacing: 2px;">
+          ⚡ SIGNAL STRENGTH: ▰▰▰▰▰▰▰▰▰▰ 100% ⚡
+        </div>
+      </div>
+    </div>
+  </div>
+`;
 
-    console.log(`Sending SMTP notifications for new blog "${blog.title}" to ${subscribers.length} subscribers...`);
+console.log(`🚀 Sending interstellar transmission for new blog "${blog.title}" to ${subscribers.length} subscribers across the cosmos...`);
 
     // Send emails in parallel, catch individual failures so other sends continue
     await Promise.all(
