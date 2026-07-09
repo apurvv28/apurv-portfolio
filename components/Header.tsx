@@ -41,7 +41,7 @@ export default function Header(): JSX.Element {
       <nav
         aria-label="Main navigation"
         className={cn(
-          "glass-panel-strong px-4 py-3 shadow-[0_10px_30px_var(--glass-shadow)] transition-all duration-300 sm:px-6 sm:py-4",
+          "glass-panel-strong backdrop-blur-md px-4 py-3 shadow-[0_10px_30px_var(--glass-shadow)] transition-all duration-300 sm:px-6 sm:py-4",
           menuOpen ? "rounded-3xl" : "rounded-full"
         )}
       >

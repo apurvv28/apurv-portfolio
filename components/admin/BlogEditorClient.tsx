@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { CloudUpload, LoaderCircle, Plus, X } from "lucide-react";
+import { CloudUpload, LoaderCircle, Plus, X, Upload } from "lucide-react";
 import Toast from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 import type { BlogRecord, BlogStatus } from "@/lib/blog-storage";
@@ -43,9 +43,81 @@ function formatClock(date = new Date()): string {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function parseMarkdownFile(fileContent: string) {
+  // strip UTF-8 BOM if present
+  const cleanContent = fileContent.replace(/^\uFEFF/, "");
+  const match = cleanContent.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+  if (!match) {
+    const lines = cleanContent.split(/\r?\n/);
+    const titleLine = lines.find((line) => line.startsWith("# "));
+    const title = titleLine ? titleLine.replace(/^#\s+/, "").trim() : "";
+    return {
+      frontmatter: { title },
+      content: cleanContent.trim()
+    };
+  }
+
+  const yamlBlock = match[1];
+  const content = match[2].trim();
+  const frontmatter: Record<string, any> = {};
+
+  const lines = yamlBlock.split(/\r?\n/);
+  let currentKey: string | null = null;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.startsWith("-") && currentKey) {
+      const val = trimmed.slice(1).trim().replace(/^['"]|['"]$/g, "");
+      if (Array.isArray(frontmatter[currentKey])) {
+        frontmatter[currentKey].push(val);
+      } else {
+        frontmatter[currentKey] = [val];
+      }
+      continue;
+    }
+
+    const colonIndex = line.indexOf(":");
+    if (colonIndex === -1) continue;
+
+    const key = line.slice(0, colonIndex).trim();
+    let val = line.slice(colonIndex + 1).trim();
+
+    currentKey = key;
+
+    if (val === "") {
+      if (key === "tags") {
+        frontmatter[key] = [];
+      }
+    } else {
+      if (key === "tags") {
+        if (val.startsWith("[") && val.endsWith("]")) {
+          frontmatter[key] = val
+            .slice(1, -1)
+            .split(",")
+            .map((t) => t.trim().replace(/^['"]|['"]$/g, ""))
+            .filter(Boolean);
+        } else {
+          frontmatter[key] = val
+            .split(",")
+            .map((t) => t.trim().replace(/^['"]|['"]$/g, ""))
+            .filter(Boolean);
+        }
+      } else {
+        val = val.replace(/^['"]|['"]$/g, "");
+        frontmatter[key] = val;
+      }
+    }
+  }
+
+  return { frontmatter, content };
+}
+
 export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClientProps): JSX.Element {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mdFileInputRef = useRef<HTMLInputElement>(null);
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error"; visible: boolean }>({
@@ -125,6 +197,73 @@ export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClient
     setField("coverImage", payload.url as string);
   };
 
+  const handleMdImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    event.target.value = "";
+
+    const isFormDirty = form.title || form.excerpt || form.content;
+    if (isFormDirty) {
+      const confirmOverwrite = window.confirm("Importing a markdown file will overwrite your current changes. Do you want to proceed?");
+      if (!confirmOverwrite) return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result;
+      if (typeof text !== "string") return;
+
+      try {
+        const { frontmatter, content } = parseMarkdownFile(text);
+
+        const title = frontmatter.title || "";
+        const slug = frontmatter.slug || slugify(title);
+        const excerpt = frontmatter.excerpt || content.slice(0, 160).replace(/[\*_>#-]/g, " ").trim();
+        const coverImage = frontmatter.coverImage || "/images/magic-object.png";
+        const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [];
+        const status = (frontmatter.status === "published" || frontmatter.status === "draft") ? frontmatter.status : "draft";
+
+        setForm({
+          title,
+          slug,
+          coverImage,
+          tags,
+          tagInput: "",
+          excerpt,
+          content,
+          status
+        });
+
+        if (frontmatter.slug) {
+          setSlugTouched(true);
+        }
+
+        setToast({
+          message: `Successfully imported "${file.name}"`,
+          type: "success",
+          visible: true
+        });
+      } catch (error) {
+        setToast({
+          message: `Failed to parse file: ${error instanceof Error ? error.message : "Invalid format"}`,
+          type: "error",
+          visible: true
+        });
+      }
+    };
+
+    reader.onerror = () => {
+      setToast({
+        message: "Failed to read file.",
+        type: "error",
+        visible: true
+      });
+    };
+
+    reader.readAsText(file);
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
@@ -174,6 +313,13 @@ export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClient
 
   return (
     <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
+      <input
+        ref={mdFileInputRef}
+        type="file"
+        accept=".md"
+        onChange={handleMdImport}
+        className="hidden"
+      />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-foreground-subtle">Blog Editor</p>
@@ -252,10 +398,20 @@ export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClient
             <p className="font-mono text-caption uppercase tracking-[0.18em] text-foreground-subtle">
               {savedAt ? `Draft saved locally at ${savedAt}` : "Autosaves every 10 seconds"}
             </p>
-            <button type="button" onClick={handleSave} disabled={loading} className="neu-raised inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-mono text-xs uppercase tracking-[0.24em] text-foreground disabled:opacity-60">
-              {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Save Blog
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => mdFileInputRef.current?.click()}
+                className="neu-raised inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-mono text-xs uppercase tracking-[0.24em] text-foreground cursor-pointer"
+              >
+                <Upload className="h-4 w-4" />
+                Import .md
+              </button>
+              <button type="button" onClick={handleSave} disabled={loading} className="neu-raised inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-mono text-xs uppercase tracking-[0.24em] text-foreground disabled:opacity-60">
+                {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                Save Blog
+              </button>
+            </div>
           </div>
         </div>
 

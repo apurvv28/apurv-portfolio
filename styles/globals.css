@@ -58,7 +58,7 @@
   --neu-border: rgba(0, 0, 0, 0.05);
 
   --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-bg-strong: rgba(255, 255, 255, 0.72);
+  --glass-bg-strong: rgba(255, 255, 255, 0.62);
   --glass-border: rgba(0, 0, 0, 0.08);
   --glass-border-strong: rgba(0, 0, 0, 0.12);
   --glass-shadow: rgba(0, 0, 0, 0.08);
@@ -267,41 +267,117 @@ textarea:focus-visible {
   z-index: 1;
 }
 
-.blog-content {
+/* ─── Markdown Rendering Styles (GitHub-inspired) ─── */
+.blog-content,
+.blog-preview-content {
+  font-size: 1rem;
+  line-height: 1.625;
   color: var(--text-main);
+  word-wrap: break-word;
+}
+
+.blog-content h1,
+.blog-preview-content h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-top: 1.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .blog-content h2,
-.blog-content h3,
-.blog-content h4 {
-  margin-top: 1.6rem;
-  margin-bottom: 0.8rem;
+.blog-preview-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--glass-border);
 }
 
-.blog-content p {
-  margin-top: 1rem;
+.blog-content h3,
+.blog-preview-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.blog-content h4,
+.blog-preview-content h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.blog-content p,
+.blog-preview-content p {
+  margin-top: 0;
   margin-bottom: 1rem;
   color: var(--text-muted);
 }
 
-.blog-content a {
+.blog-content a,
+.blog-preview-content a {
+  color: var(--text-main);
   text-decoration: underline;
   text-underline-offset: 0.2em;
+  font-weight: 500;
 }
 
-.blog-content blockquote {
-  margin: 1.5rem 0;
-  padding: 1rem 1.25rem;
-  border-left: 2px solid var(--glass-border-strong);
-  background: var(--glass-bg);
-  border-radius: 1rem;
+.blog-content a:hover,
+.blog-preview-content a:hover {
+  opacity: 0.8;
+}
+
+.blog-content blockquote,
+.blog-preview-content blockquote {
+  margin: 1.25rem 0;
+  padding: 0.75rem 1.25rem;
+  border-left: 4px solid var(--text-subtle);
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+  border-radius: 0.5rem;
+}
+
+.blog-content blockquote p,
+.blog-preview-content blockquote p {
+  margin: 0;
+}
+
+.blog-content ul,
+.blog-preview-content ul {
+  list-style-type: disc;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+  color: var(--text-muted);
+}
+
+.blog-content ol,
+.blog-preview-content ol {
+  list-style-type: decimal;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+  color: var(--text-muted);
+}
+
+.blog-content li,
+.blog-preview-content li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 
 .blog-content pre,
 .blog-preview-content pre {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding: 1rem;
   overflow-x: auto;
-  padding: 1rem 1.1rem;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   background: var(--surface-secondary);
   border: 1px solid var(--glass-border);
 }
@@ -309,17 +385,63 @@ textarea:focus-visible {
 .blog-content code,
 .blog-preview-content code {
   font-family: var(--font-mono), monospace;
-  font-size: 0.92em;
+  font-size: 0.875em;
+  padding: 0.2em 0.4em;
+  border-radius: 6px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--glass-border);
 }
 
-.blog-content ul,
-.blog-content ol {
-  margin: 1rem 0;
-  padding-left: 1.4rem;
-  color: var(--text-muted);
+/* Override code block styling to prevent double background */
+.blog-content pre code,
+.blog-preview-content pre code {
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-size: 100%;
 }
 
-.blog-content img {
-  border-radius: 1rem;
-  margin: 1.4rem 0;
+.blog-content img,
+.blog-preview-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 1.5rem auto;
+  display: block;
+}
+
+.blog-content hr,
+.blog-preview-content hr {
+  height: 0.25em;
+  padding: 0;
+  margin: 1.5rem 0;
+  background-color: var(--glass-border);
+  border: 0;
+}
+
+.blog-content table,
+.blog-preview-content table {
+  width: 100%;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  border-collapse: collapse;
+}
+
+.blog-content table th,
+.blog-preview-content table th,
+.blog-content table td,
+.blog-preview-content table td {
+  padding: 6px 13px;
+  border: 1px solid var(--glass-border);
+}
+
+.blog-content table tr,
+.blog-preview-content table tr {
+  background-color: transparent;
+  border-top: 1px solid var(--glass-border);
+}
+
+.blog-content table tr:nth-child(2n),
+.blog-preview-content table tr:nth-child(2n) {
+  background-color: var(--surface-secondary);
 }
