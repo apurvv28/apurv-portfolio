@@ -200,10 +200,16 @@ function parseBlogMarkdown(fileContents: string): BlogRecord {
 
   const normalizedTags = Array.isArray(frontmatter.tags) ? sanitizeTags(frontmatter.tags) : [];
 
+  let coverImage = frontmatter.coverImage;
+  const s3Match = coverImage.match(/https:\/\/[^/]+\.s3\.[^/]+\.amazonaws\.com(\/uploads\/blogs\/.*)/);
+  if (s3Match) {
+    coverImage = s3Match[1];
+  }
+
   return {
     title: frontmatter.title,
     slug: frontmatter.slug,
-    coverImage: frontmatter.coverImage,
+    coverImage: coverImage,
     tags: normalizedTags,
     excerpt: frontmatter.excerpt,
     publishedAt: frontmatter.publishedAt,

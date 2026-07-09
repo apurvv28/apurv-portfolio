@@ -55,7 +55,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (isS3Configured()) {
     try {
       const buffer = Buffer.from(await file.arrayBuffer());
-      fileUrl = await uploadS3Image(filename, buffer, file.type);
+      await uploadS3Image(filename, buffer, file.type);
+      fileUrl = `/uploads/blogs/${filename}`;
     } catch (error: any) {
       return NextResponse.json(
         { error: `Failed to upload to S3: ${error.message}` },

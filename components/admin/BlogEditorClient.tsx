@@ -197,6 +197,29 @@ export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClient
     setField("coverImage", payload.url as string);
   };
 
+  const handleCoverUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    try {
+      await uploadCover(file);
+      setToast({
+        message: "Cover image uploaded successfully.",
+        type: "success",
+        visible: true
+      });
+    } catch (error) {
+      setToast({
+        message: error instanceof Error ? error.message : "Failed to upload cover image.",
+        type: "error",
+        visible: true
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleMdImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -220,7 +243,10 @@ export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClient
         const title = frontmatter.title || "";
         const slug = frontmatter.slug || slugify(title);
         const excerpt = frontmatter.excerpt || content.slice(0, 160).replace(/[\*_>#-]/g, " ").trim();
-        const coverImage = frontmatter.coverImage || "/images/magic-object.png";
+        let coverImage = frontmatter.coverImage || "/images/magic-object.png";
+        if (coverImage && !coverImage.startsWith("/") && !coverImage.startsWith("http://") && !coverImage.startsWith("https://")) {
+          coverImage = "/" + coverImage;
+        }
         const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [];
         const status = (frontmatter.status === "published" || frontmatter.status === "draft") ? frontmatter.status : "draft";
 
@@ -357,15 +383,15 @@ export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClient
             </label>
           </div>
 
-          <label className="block space-y-2">
+          <div className="block space-y-2">
             <span className="font-mono text-xs uppercase tracking-[0.22em] text-foreground-subtle">Cover Image</span>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={async (event) => { const file = event.target.files?.[0]; if (file) await uploadCover(file); }} className="hidden" />
-            <button type="button" onClick={() => fileInputRef.current?.click()} className="glass-panel flex w-full flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-[var(--glass-border-strong)] px-6 py-8 text-center text-sm text-foreground-muted">
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
+            <button type="button" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }} className="glass-panel flex w-full flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-[var(--glass-border-strong)] px-6 py-8 text-center text-sm text-foreground-muted w-full cursor-pointer">
               <CloudUpload className="h-7 w-7" />
               <span>Drop image here or browse</span>
               {form.coverImage ? <img src={form.coverImage} alt="Cover preview" className="mt-2 h-28 w-full rounded-2xl object-cover" /> : null}
             </button>
-          </label>
+          </div>
 
           <div className="space-y-2">
             <span className="font-mono text-xs uppercase tracking-[0.22em] text-foreground-subtle">Tags</span>
