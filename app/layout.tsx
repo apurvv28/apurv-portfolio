@@ -27,7 +27,7 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap"
 });
 
-const siteUrl = "https://apurvv.vercel.app";
+const siteUrl = "https://apurvv.me";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

@@ -7,7 +7,7 @@ export async function notifySubscribers(blog: BlogRecord): Promise<void> {
   const port = process.env.SMTP_PORT?.trim();
   const user = process.env.SMTP_USER?.trim();
   const pass = process.env.SMTP_PASSWORD?.trim();
-  const from = process.env.SMTP_FROM?.trim() || `"Apurv Saktepar" <noreply@apurvv.vercel.app>`;
+  const from = process.env.SMTP_FROM?.trim() || `"Apurv Saktepar" <noreply@apurvv.me>`;
 
   if (!host || !port || !user || !pass) {
     console.warn("SMTP email credentials are not fully configured. Email notifications bypassed.");
