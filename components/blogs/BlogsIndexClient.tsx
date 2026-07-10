@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { Search, Satellite, ChevronDown, BookOpen } from "lucide-react";
+import { Search, Satellite, ChevronDown, BookOpen, Eye } from "lucide-react";
 import type { BlogSummary } from "@/lib/blog-storage";
 
 type BlogsIndexClientProps = { blogs: BlogSummary[] };
@@ -180,7 +180,13 @@ export default function BlogsIndexClient({ blogs }: BlogsIndexClientProps): JSX.
                     <div className="p-5">
                       <div className="flex items-center justify-between text-caption text-foreground-subtle">
                         <span className="font-mono uppercase tracking-[0.18em]">{formatDate(blog.publishedAt)}</span>
-                        <span className="font-mono uppercase tracking-[0.18em]">{blog.readTimeMinutes} min read</span>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono uppercase tracking-[0.18em]">{blog.readTimeMinutes} min read</span>
+                          <span className="inline-flex items-center gap-1 font-mono uppercase tracking-[0.18em]">
+                            <Eye className="h-3.5 w-3.5" />
+                            {blog.reads ?? 0}
+                          </span>
+                        </div>
                       </div>
                       <h2 className="mt-3 font-heading text-2xl text-foreground">{blog.title}</h2>
                       <p className="mt-2 line-clamp-3 text-sm text-foreground-muted">{blog.excerpt}</p>

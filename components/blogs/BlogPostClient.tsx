@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Copy, Share2, ArrowLeft } from "lucide-react";
+import { Copy, Share2, ArrowLeft, Eye } from "lucide-react";
 import type { BlogRecord, BlogSummary } from "@/lib/blog-storage";
 
 type BlogPostClientProps = {
@@ -17,6 +17,39 @@ function formatDate(value: string): string {
 
 export default function BlogPostClient({ blog, related }: BlogPostClientProps): JSX.Element {
   const [progress, setProgress] = useState(0);
+  const [readCount, setReadCount] = useState(blog.reads ?? 0);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const recordRead = async () => {
+      try {
+        const viewedKey = `read_blog_${blog.slug}`;
+        if (sessionStorage.getItem(viewedKey)) {
+          return;
+        }
+
+        const response = await fetch(`/api/blogs/${blog.slug}/read`, {
+          method: "POST",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (mounted && typeof data.reads === "number") {
+            setReadCount(data.reads);
+            sessionStorage.setItem(viewedKey, "true");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to record read:", error);
+      }
+    };
+
+    recordRead();
+
+    return () => {
+      mounted = false;
+    };
+  }, [blog.slug]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,7 +93,13 @@ export default function BlogPostClient({ blog, related }: BlogPostClientProps): 
               <h1 className="mt-4 font-heading text-4xl text-foreground sm:text-5xl">{blog.title}</h1>
               <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-foreground-muted">
                 <span>{formatDate(blog.publishedAt)}</span>
+                <span>•</span>
                 <span>{blog.readTimeMinutes} min read</span>
+                <span>•</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Eye className="h-4 w-4" />
+                  {readCount} {readCount === 1 ? "read" : "reads"}
+                </span>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 {blog.tags.map((tag) => <span key={tag} className="neu-flat rounded-full px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-foreground">{tag}</span>)}

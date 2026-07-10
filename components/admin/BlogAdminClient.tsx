@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, CheckCircle2, CircleDot, PencilLine, Plus, Trash2, RefreshCcw } from "lucide-react";
+import { CalendarDays, CheckCircle2, CircleDot, PencilLine, Plus, Trash2, RefreshCcw, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Toast from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
@@ -135,6 +135,7 @@ export default function BlogAdminClient({ initialBlogs }: BlogAdminClientProps):
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-caption text-foreground-subtle">
                     <span className="inline-flex items-center gap-1 font-mono uppercase tracking-[0.16em]"><CalendarDays className="h-3.5 w-3.5" /> {formatDate(blog.updatedAt)}</span>
                     <span className="font-mono uppercase tracking-[0.16em]">/{blog.slug}</span>
+                    <span className="inline-flex items-center gap-1 font-mono uppercase tracking-[0.16em]"><Eye className="h-3.5 w-3.5" /> {blog.reads ?? 0} reads</span>
                   </div>
                 </div>
 

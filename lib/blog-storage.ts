@@ -14,6 +14,7 @@ import {
   listS3Blogs,
   getS3Client
 } from "./s3-storage";
+import { getBlogReads } from "./blog-reads";
 
 export type BlogStatus = "draft" | "published";
 
@@ -32,6 +33,7 @@ export type BlogRecord = BlogFrontmatter & {
   content: string;
   html: string;
   readTimeMinutes: number;
+  reads?: number;
 };
 
 export type BlogSummary = Omit<BlogRecord, "content" | "html">;
@@ -249,6 +251,10 @@ export async function readBlogBySlug(slug: string): Promise<BlogRecord | null> {
 
   const parsed = parseBlogMarkdown(raw);
   parsed.html = await renderMarkdownToHtml(parsed.content);
+
+  const readsMap = await getBlogReads();
+  parsed.reads = readsMap[slug] || 0;
+
   return parsed;
 }
 
@@ -277,10 +283,14 @@ export async function listBlogs(options: { includeDrafts?: boolean } = {}): Prom
   }
 
   const filtered = options.includeDrafts ? records : records.filter((blog) => blog.status === "published");
+  const readsMap = await getBlogReads();
 
   return filtered
     .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
-    .map(({ content: _content, html: _html, ...summary }) => summary);
+    .map(({ content: _content, html: _html, ...summary }) => ({
+      ...summary,
+      reads: readsMap[summary.slug] || 0
+    }));
 }
 
 export async function listBlogRecords(options: { includeDrafts?: boolean } = {}): Promise<BlogRecord[]> {
@@ -307,7 +317,13 @@ export async function listBlogRecords(options: { includeDrafts?: boolean } = {})
     );
   }
 
-  return options.includeDrafts ? records : records.filter((blog) => blog.status === "published");
+  const filtered = options.includeDrafts ? records : records.filter((blog) => blog.status === "published");
+  const readsMap = await getBlogReads();
+
+  return filtered.map((blog) => ({
+    ...blog,
+    reads: readsMap[blog.slug] || 0
+  }));
 }
 
 export async function listPublishedBlogs(): Promise<BlogSummary[]> {
@@ -375,6 +391,7 @@ export async function createBlog(input: Required<Pick<BlogInput, "title" | "cont
   }
 
   blog.html = await renderMarkdownToHtml(blog.content);
+  blog.reads = 0;
   return blog;
 }
 
@@ -419,6 +436,8 @@ export async function updateBlog(
   }
 
   nextBlog.html = await renderMarkdownToHtml(nextBlog.content);
+  const readsMap = await getBlogReads();
+  nextBlog.reads = readsMap[nextBlog.slug] || 0;
   return nextBlog;
 }
 
