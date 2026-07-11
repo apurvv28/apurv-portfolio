@@ -52,15 +52,18 @@ export default function BlogPostClient({ blog, related }: BlogPostClientProps): 
   }, [blog.slug]);
 
   useEffect(() => {
-    const renderMermaid = async () => {
-      try {
-        const mermaidElements = document.querySelectorAll("pre code.language-mermaid");
-        if (mermaidElements.length === 0) return;
+    let active = true;
 
+    const renderMermaid = async () => {
+      const mermaidElements = document.querySelectorAll("pre code.language-mermaid");
+      if (mermaidElements.length === 0) return;
+
+      try {
         const mermaid = (await import("mermaid")).default;
         const isDark = document.documentElement.classList.contains("dark") || 
                        (!document.documentElement.classList.contains("light") && 
                         (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches));
+        
         mermaid.initialize({
           startOnLoad: false,
           theme: isDark ? "dark" : "default",
@@ -70,25 +73,44 @@ export default function BlogPostClient({ blog, related }: BlogPostClientProps): 
           }
         });
 
-        mermaidElements.forEach((codeEl, index) => {
+        for (let i = 0; i < mermaidElements.length; i++) {
+          const codeEl = mermaidElements[i];
           const preEl = codeEl.parentElement;
-          if (!preEl) return;
+          if (!preEl) continue;
 
-          const container = document.createElement("div");
-          container.className = "mermaid flex justify-center my-6 p-4 rounded-xl bg-surface-secondary/40 border border-white/5 overflow-x-auto";
-          container.id = `mermaid-${index}`;
-          container.textContent = codeEl.textContent;
+          const code = codeEl.textContent || "";
+          const id = `mermaid-post-svg-${i}-${Math.random().toString(36).substring(2, 5)}`;
 
-          preEl.parentNode?.replaceChild(container, preEl);
-        });
+          try {
+            const { svg: renderedSvg } = await mermaid.render(id, code);
+            if (!active) return;
 
-        await mermaid.run();
+            const container = document.createElement("div");
+            container.className = "mermaid-render flex justify-center my-6 overflow-x-auto p-4 rounded-xl bg-surface-secondary/40 border border-white/5";
+            container.innerHTML = renderedSvg;
+
+            preEl.parentNode?.replaceChild(container, preEl);
+          } catch (err) {
+            console.error(`Failed to render mermaid diagram ${i}:`, err);
+            if (!active) return;
+
+            const errorContainer = document.createElement("div");
+            errorContainer.className = "rounded-xl border border-red-500/30 bg-red-500/10 p-4 font-mono text-xs text-red-400 my-4";
+            errorContainer.innerHTML = `<p class="font-semibold">Mermaid Render Error:</p><p class="mt-1 whitespace-pre-wrap">${err instanceof Error ? err.message : "Invalid syntax"}</p>`;
+            
+            preEl.parentNode?.replaceChild(errorContainer, preEl);
+          }
+        }
       } catch (error) {
-        console.error("Failed to render Mermaid diagrams:", error);
+        console.error("Failed to load mermaid:", error);
       }
     };
 
     renderMermaid();
+
+    return () => {
+      active = false;
+    };
   }, [blog.html]);
 
   useEffect(() => {
