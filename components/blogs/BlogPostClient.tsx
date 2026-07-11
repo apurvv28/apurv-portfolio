@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Copy, Share2, ArrowLeft, Eye } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import MermaidCode from "@/components/ui/MermaidCode";
 import type { BlogRecord, BlogSummary } from "@/lib/blog-storage";
 
 type BlogPostClientProps = {
@@ -51,67 +54,6 @@ export default function BlogPostClient({ blog, related }: BlogPostClientProps): 
     };
   }, [blog.slug]);
 
-  useEffect(() => {
-    let active = true;
-
-    const renderMermaid = async () => {
-      const mermaidElements = document.querySelectorAll("pre code.language-mermaid");
-      if (mermaidElements.length === 0) return;
-
-      try {
-        const mermaid = (await import("mermaid")).default;
-        const isDark = document.documentElement.classList.contains("dark") || 
-                       (!document.documentElement.classList.contains("light") && 
-                        (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches));
-        
-        mermaid.initialize({
-          startOnLoad: false,
-          theme: isDark ? "dark" : "default",
-          securityLevel: "loose",
-          themeVariables: {
-            background: "transparent",
-          }
-        });
-
-        for (let i = 0; i < mermaidElements.length; i++) {
-          const codeEl = mermaidElements[i];
-          const preEl = codeEl.parentElement;
-          if (!preEl) continue;
-
-          const code = codeEl.textContent || "";
-          const id = `mermaid-post-svg-${i}-${Math.random().toString(36).substring(2, 5)}`;
-
-          try {
-            const { svg: renderedSvg } = await mermaid.render(id, code);
-            if (!active) return;
-
-            const container = document.createElement("div");
-            container.className = "mermaid-render flex justify-center my-6 overflow-x-auto p-4 rounded-xl bg-surface-secondary/40 border border-white/5";
-            container.innerHTML = renderedSvg;
-
-            preEl.parentNode?.replaceChild(container, preEl);
-          } catch (err) {
-            console.error(`Failed to render mermaid diagram ${i}:`, err);
-            if (!active) return;
-
-            const errorContainer = document.createElement("div");
-            errorContainer.className = "rounded-xl border border-red-500/30 bg-red-500/10 p-4 font-mono text-xs text-red-400 my-4";
-            errorContainer.innerHTML = `<p class="font-semibold">Mermaid Render Error:</p><p class="mt-1 whitespace-pre-wrap">${err instanceof Error ? err.message : "Invalid syntax"}</p>`;
-            
-            preEl.parentNode?.replaceChild(errorContainer, preEl);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load mermaid:", error);
-      }
-    };
-
-    renderMermaid();
-
-    return () => {
-      active = false;
-    };
-  }, [blog.html]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -181,7 +123,26 @@ export default function BlogPostClient({ blog, related }: BlogPostClientProps): 
           </button>
         </div>
 
-        <div className="blog-content glass-panel mt-6 rounded-[2rem] p-6 sm:p-8" dangerouslySetInnerHTML={{ __html: blog.html }} />
+        <div className="blog-content glass-panel mt-6 rounded-[2rem] p-6 sm:p-8">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              code(props) {
+                const { className, children, ...rest } = props;
+                const match = /language-mermaid/.exec(className || "");
+                return match ? (
+                  <MermaidCode code={String(children).replace(/\n$/, "")} />
+                ) : (
+                  <code className={className} {...rest}>
+                    {children}
+                  </code>
+                );
+              }
+            }}
+          >
+            {blog.content}
+          </ReactMarkdown>
+        </div>
       </article>
 
       {related.length > 0 ? (
