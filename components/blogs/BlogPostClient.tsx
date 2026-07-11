@@ -52,6 +52,46 @@ export default function BlogPostClient({ blog, related }: BlogPostClientProps): 
   }, [blog.slug]);
 
   useEffect(() => {
+    const renderMermaid = async () => {
+      try {
+        const mermaidElements = document.querySelectorAll("pre code.language-mermaid");
+        if (mermaidElements.length === 0) return;
+
+        const mermaid = (await import("mermaid")).default;
+        const isDark = document.documentElement.classList.contains("dark") || 
+                       (!document.documentElement.classList.contains("light") && 
+                        (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches));
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: isDark ? "dark" : "default",
+          securityLevel: "loose",
+          themeVariables: {
+            background: "transparent",
+          }
+        });
+
+        mermaidElements.forEach((codeEl, index) => {
+          const preEl = codeEl.parentElement;
+          if (!preEl) return;
+
+          const container = document.createElement("div");
+          container.className = "mermaid flex justify-center my-6 p-4 rounded-xl bg-surface-secondary/40 border border-white/5 overflow-x-auto";
+          container.id = `mermaid-${index}`;
+          container.textContent = codeEl.textContent;
+
+          preEl.parentNode?.replaceChild(container, preEl);
+        });
+
+        await mermaid.run();
+      } catch (error) {
+        console.error("Failed to render Mermaid diagrams:", error);
+      }
+    };
+
+    renderMermaid();
+  }, [blog.html]);
+
+  useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY;
       const total = document.documentElement.scrollHeight - window.innerHeight;

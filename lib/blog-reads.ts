@@ -34,7 +34,7 @@ export async function getBlogReads(): Promise<Record<string, number>> {
     try {
       const url = await getReadsBlobUrl();
       if (url) {
-        const response = await fetch(url, { cache: "no-store" });
+        const response = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
         if (response.ok) {
           const data = await response.json();
           return typeof data === "object" && data !== null ? data : {};
@@ -66,7 +66,8 @@ export async function incrementBlogReads(slug: string): Promise<number> {
     try {
       const blob = await put("blog-reads.json", JSON.stringify(reads), {
         access: "public",
-        addRandomSuffix: false
+        addRandomSuffix: false,
+        allowOverwrite: true
       });
       readsBlobUrl = blob.url;
       return newCount;

@@ -114,6 +114,72 @@ function parseMarkdownFile(fileContent: string) {
   return { frontmatter, content };
 }
 
+function MermaidCode({ code }: { code: string }) {
+  const [svg, setSvg] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const render = async () => {
+      try {
+        const mermaid = (await import("mermaid")).default;
+        const isDark = document.documentElement.classList.contains("dark") || 
+                       (!document.documentElement.classList.contains("light") && 
+                        (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches));
+        
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: isDark ? "dark" : "default",
+          securityLevel: "loose",
+          themeVariables: {
+            background: "transparent",
+          }
+        });
+        const id = `mermaid-svg-${Math.random().toString(36).substring(2, 9)}`;
+        const { svg: renderedSvg } = await mermaid.render(id, code);
+        if (active) {
+          setSvg(renderedSvg);
+          setError(null);
+        }
+      } catch (err: any) {
+        console.error("Mermaid parsing error:", err);
+        if (active) {
+          setError(err?.message || "Invalid Mermaid syntax");
+        }
+      }
+    };
+
+    render();
+    return () => {
+      active = false;
+    };
+  }, [code]);
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 font-mono text-xs text-red-400 my-4">
+        <p className="font-semibold">Mermaid Render Error:</p>
+        <p className="mt-1 whitespace-pre-wrap">{error}</p>
+      </div>
+    );
+  }
+
+  if (!svg) {
+    return (
+      <div className="flex h-20 items-center justify-center font-mono text-xs text-foreground-muted animate-pulse my-4 rounded-xl bg-surface-secondary/40 border border-white/5">
+        Rendering diagram...
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="mermaid-render flex justify-center my-6 overflow-x-auto p-4 rounded-xl bg-surface-secondary/40 border border-white/5"
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
+}
+
 export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClientProps): JSX.Element {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -453,7 +519,24 @@ export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClient
               {form.tags.map((tag) => <span key={tag} className="neu-flat rounded-full px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-foreground">{tag}</span>)}
             </div>
             <div className="blog-preview-content mt-6">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{form.content || "Start writing markdown to see the live preview."}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code(props) {
+                    const { node, className, children, ...rest } = props;
+                    const match = /language-mermaid/.exec(className || "");
+                    return match ? (
+                      <MermaidCode code={String(children).replace(/\n$/, "")} />
+                    ) : (
+                      <code className={className} {...rest}>
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
+                {form.content || "Start writing markdown to see the live preview."}
+              </ReactMarkdown>
             </div>
           </div>
         </div>
