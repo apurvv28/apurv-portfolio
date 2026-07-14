@@ -13,7 +13,7 @@ export const education: EducationEntry[] = [
     degree: "B.Tech — Computer Science & Engineering (AI)",
     institute: "Vishwakarma Institute of Technology, Pune",
     score: "CGPA 9.52",
-    duration: "2023 — Present",
+    duration: "2025 — Present",
     active: true
   },
   {
@@ -21,6 +21,6 @@ export const education: EducationEntry[] = [
     degree: "Diploma — Computer Engineering",
     institute: "Government Polytechnic, Pune",
     score: "93.27%",
-    duration: "2020 — 2023"
+    duration: "2022 — 2025"
   }
 ];

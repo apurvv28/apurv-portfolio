@@ -5,11 +5,40 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { CloudUpload, LoaderCircle, Plus, X, Upload } from "lucide-react";
+import {
+  CloudUpload,
+  LoaderCircle,
+  Plus,
+  X,
+  Upload,
+  Bold,
+  Italic,
+  Code,
+  Heading2,
+  Heading3,
+  Link as LinkIcon,
+  Quote,
+  List,
+  ListOrdered,
+  Terminal,
+  Minus,
+  Image as ImageIcon,
+  Undo,
+  Redo
+} from "lucide-react";
 import Toast from "@/components/ui/Toast";
 import MermaidCode from "@/components/ui/MermaidCode";
 import { cn } from "@/lib/utils";
 import type { BlogRecord, BlogStatus } from "@/lib/blog-storage";
+
+// TipTap Editor imports
+import { useEditor, EditorContent } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
+import StarterKit from "@tiptap/starter-kit";
+import ImageExtension from "@tiptap/extension-image";
+import LinkExtension from "@tiptap/extension-link";
+import PlaceholderExtension from "@tiptap/extension-placeholder";
+import { Markdown as MarkdownExtension } from "@tiptap/markdown";
 
 type BlogEditorClientProps = {
   mode: "create" | "edit";
@@ -120,6 +149,7 @@ export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClient
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mdFileInputRef = useRef<HTMLInputElement>(null);
+  const inlineImageInputRef = useRef<HTMLInputElement>(null);
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error"; visible: boolean }>({
@@ -141,6 +171,123 @@ export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClient
   }));
 
   const autosaveKey = useMemo(() => `${AUTOSAVE_PREFIX}:${mode}:${initialBlog?.slug ?? "new"}`, [mode, initialBlog?.slug]);
+
+  // Initialize Tiptap editor
+  const editor = useEditor({
+    immediatelyRender: false,
+    extensions: [
+      StarterKit,
+      ImageExtension.configure({
+        HTMLAttributes: {
+          class: "rounded-2xl max-w-full my-4 mx-auto block border border-[var(--glass-border)] shadow-md"
+        }
+      }),
+      LinkExtension.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: "underline font-medium text-foreground hover:opacity-80 transition-opacity"
+        }
+      }),
+      PlaceholderExtension.configure({
+        placeholder: "Write your story..."
+      }),
+      MarkdownExtension
+    ],
+    content: initialBlog?.content ?? "",
+    onUpdate: ({ editor }) => {
+      const md = editor.getMarkdown();
+      setForm((current) => ({ ...current, content: md }));
+    },
+    editorProps: {
+      attributes: {
+        class: "focus:outline-none min-h-[450px] w-full"
+      },
+      handleDrop: (view, event, slice, moved) => {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+          const file = event.dataTransfer.files[0];
+          if (file.type.startsWith("image/")) {
+            event.preventDefault();
+            uploadAndInsertImage(file, view.state.selection.from);
+            return true;
+          }
+        }
+        return false;
+      },
+      handlePaste: (view, event) => {
+        if (event.clipboardData && event.clipboardData.files && event.clipboardData.files[0]) {
+          const file = event.clipboardData.files[0];
+          if (file.type.startsWith("image/")) {
+            event.preventDefault();
+            uploadAndInsertImage(file, view.state.selection.from);
+            return true;
+          }
+        }
+        return false;
+      }
+    }
+  });
+
+  // Sync programmatic changes (like Markdown import) back to Tiptap
+  useEffect(() => {
+    if (editor && editor.getMarkdown() !== form.content) {
+      editor.commands.setContent(form.content, { emitUpdate: false });
+    }
+  }, [form.content, editor]);
+
+  const uploadAndInsertImage = async (file: File, pos?: number) => {
+    setLoading(true);
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      const response = await fetch("/api/blogs/upload", { method: "POST", body: data });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Upload failed.");
+
+      const url = payload.url;
+      if (editor) {
+        if (typeof pos === "number") {
+          editor.chain().focus().insertContentAt(pos, {
+            type: "image",
+            attrs: { src: url }
+          }).run();
+        } else {
+          editor.chain().focus().setImage({ src: url }).run();
+        }
+        setToast({
+          message: "Image uploaded and inserted successfully.",
+          type: "success",
+          visible: true
+        });
+      }
+    } catch (error) {
+      setToast({
+        message: error instanceof Error ? error.message : "Failed to upload image.",
+        type: "error",
+        visible: true
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInlineImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    event.target.value = "";
+    await uploadAndInsertImage(file);
+  };
+
+  const setLink = () => {
+    if (!editor) return;
+    const previousUrl = editor.getAttributes("link").href;
+    const url = window.prompt("URL:", previousUrl);
+    if (url === null) return;
+    if (url === "") {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+  };
 
   useEffect(() => {
     const raw = localStorage.getItem(autosaveKey);
@@ -417,10 +564,222 @@ export default function BlogEditorClient({ mode, initialBlog }: BlogEditorClient
             <textarea value={form.excerpt} onChange={(event) => setField("excerpt", event.target.value)} rows={4} className="neu-pressed w-full rounded-2xl px-4 py-3 text-sm text-foreground outline-none" placeholder="Short summary for cards and metadata" />
           </label>
 
-          <label className="block space-y-2">
+          <div className="block space-y-2">
             <span className="font-mono text-xs uppercase tracking-[0.22em] text-foreground-subtle">Content</span>
-            <textarea value={form.content} onChange={(event) => setField("content", event.target.value)} rows={14} className="neu-pressed w-full rounded-3xl px-4 py-4 font-mono text-sm text-foreground outline-none" placeholder="# Write your markdown here" />
-          </label>
+            <div className="neu-pressed overflow-hidden rounded-3xl border border-[var(--glass-border)] bg-transparent">
+              {editor && (
+                <>
+                  {/* Sticky Toolbar */}
+                  <div className="sticky top-0 z-10 flex flex-wrap items-center gap-1.5 border-b border-[var(--glass-border)] bg-[#0d0e15] px-4 py-2.5">
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().undo().run()}
+                      disabled={!editor.can().undo()}
+                      className="rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-all"
+                      title="Undo"
+                    >
+                      <Undo className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().redo().run()}
+                      disabled={!editor.can().redo()}
+                      className="rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-all"
+                      title="Redo"
+                    >
+                      <Redo className="h-4 w-4" />
+                    </button>
+                    <div className="h-5 w-[1px] bg-[var(--glass-border)] mx-1" />
+                    
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleBold().run()}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("bold") && "bg-surface-mid text-foreground"
+                      )}
+                      title="Bold"
+                    >
+                      <Bold className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleItalic().run()}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("italic") && "bg-surface-mid text-foreground"
+                      )}
+                      title="Italic"
+                    >
+                      <Italic className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleCode().run()}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("code") && "bg-surface-mid text-foreground"
+                      )}
+                      title="Inline Code"
+                    >
+                      <Code className="h-4 w-4" />
+                    </button>
+                    <div className="h-5 w-[1px] bg-[var(--glass-border)] mx-1" />
+
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleBulletList().run()}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("bulletList") && "bg-surface-mid text-foreground"
+                      )}
+                      title="Bullet List"
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("orderedList") && "bg-surface-mid text-foreground"
+                      )}
+                      title="Numbered List"
+                    >
+                      <ListOrdered className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("codeBlock") && "bg-surface-mid text-foreground"
+                      )}
+                      title="Code Block"
+                    >
+                      <Terminal className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("blockquote") && "bg-surface-mid text-foreground"
+                      )}
+                      title="Blockquote"
+                    >
+                      <Quote className="h-4 w-4" />
+                    </button>
+                    <div className="h-5 w-[1px] bg-[var(--glass-border)] mx-1" />
+
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().setHorizontalRule().run()}
+                      className="rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all"
+                      title="Divider"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => inlineImageInputRef.current?.click()}
+                      className="rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all"
+                      title="Insert Image"
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                    </button>
+                    <input
+                      ref={inlineImageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleInlineImageUpload}
+                      className="hidden"
+                    />
+                  </div>
+
+                  {/* Selection Popover / Bubble Menu */}
+                  <BubbleMenu
+                    editor={editor}
+                    className="flex items-center gap-1 rounded-xl border border-[var(--glass-border-strong)] bg-[#0d0e15] p-1.5 shadow-2xl backdrop-blur-md"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleBold().run()}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("bold") && "bg-surface-mid text-foreground"
+                      )}
+                    >
+                      <Bold className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleItalic().run()}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("italic") && "bg-surface-mid text-foreground"
+                      )}
+                    >
+                      <Italic className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={setLink}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("link") && "bg-surface-mid text-foreground"
+                      )}
+                    >
+                      <LinkIcon className="h-3.5 w-3.5" />
+                    </button>
+                    <div className="h-4 w-[1px] bg-[var(--glass-border)] mx-1" />
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("heading", { level: 2 }) && "bg-surface-mid text-foreground"
+                      )}
+                    >
+                      <Heading2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("heading", { level: 3 }) && "bg-surface-mid text-foreground"
+                      )}
+                    >
+                      <Heading3 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                      className={cn(
+                        "rounded-lg p-1.5 text-foreground-muted hover:bg-surface-mid hover:text-foreground transition-all",
+                        editor.isActive("blockquote") && "bg-surface-mid text-foreground"
+                      )}
+                    >
+                      <Quote className="h-3.5 w-3.5" />
+                    </button>
+                  </BubbleMenu>
+                </>
+              )}
+
+              {/* Editor Content Area */}
+              <div className="p-4">
+                {editor ? (
+                  <EditorContent editor={editor} />
+                ) : (
+                  <div className="flex h-[450px] items-center justify-center text-foreground-muted">
+                    <LoaderCircle className="h-8 w-8 animate-spin" />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-caption uppercase tracking-[0.18em] text-foreground-subtle">

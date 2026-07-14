@@ -269,7 +269,8 @@ textarea:focus-visible {
 
 /* ─── Markdown Rendering Styles (GitHub-inspired) ─── */
 .blog-content,
-.blog-preview-content {
+.blog-preview-content,
+.ProseMirror {
   font-size: 1rem;
   line-height: 1.625;
   color: var(--text-main);
@@ -277,7 +278,8 @@ textarea:focus-visible {
 }
 
 .blog-content h1,
-.blog-preview-content h1 {
+.blog-preview-content h1,
+.ProseMirror h1 {
   font-size: 2rem;
   font-weight: 600;
   margin-top: 1.75rem;
@@ -287,7 +289,8 @@ textarea:focus-visible {
 }
 
 .blog-content h2,
-.blog-preview-content h2 {
+.blog-preview-content h2,
+.ProseMirror h2 {
   font-size: 1.5rem;
   font-weight: 600;
   margin-top: 1.5rem;
@@ -297,7 +300,8 @@ textarea:focus-visible {
 }
 
 .blog-content h3,
-.blog-preview-content h3 {
+.blog-preview-content h3,
+.ProseMirror h3 {
   font-size: 1.25rem;
   font-weight: 600;
   margin-top: 1.5rem;
@@ -305,7 +309,8 @@ textarea:focus-visible {
 }
 
 .blog-content h4,
-.blog-preview-content h4 {
+.blog-preview-content h4,
+.ProseMirror h4 {
   font-size: 1rem;
   font-weight: 600;
   margin-top: 1.25rem;
@@ -313,14 +318,16 @@ textarea:focus-visible {
 }
 
 .blog-content p,
-.blog-preview-content p {
+.blog-preview-content p,
+.ProseMirror p {
   margin-top: 0;
   margin-bottom: 1rem;
   color: var(--text-muted);
 }
 
 .blog-content a,
-.blog-preview-content a {
+.blog-preview-content a,
+.ProseMirror a {
   color: var(--text-main);
   text-decoration: underline;
   text-underline-offset: 0.2em;
@@ -328,12 +335,14 @@ textarea:focus-visible {
 }
 
 .blog-content a:hover,
-.blog-preview-content a:hover {
+.blog-preview-content a:hover,
+.ProseMirror a:hover {
   opacity: 0.8;
 }
 
 .blog-content blockquote,
-.blog-preview-content blockquote {
+.blog-preview-content blockquote,
+.ProseMirror blockquote {
   margin: 1.25rem 0;
   padding: 0.75rem 1.25rem;
   border-left: 4px solid var(--text-subtle);
@@ -343,12 +352,14 @@ textarea:focus-visible {
 }
 
 .blog-content blockquote p,
-.blog-preview-content blockquote p {
+.blog-preview-content blockquote p,
+.ProseMirror blockquote p {
   margin: 0;
 }
 
 .blog-content ul,
-.blog-preview-content ul {
+.blog-preview-content ul,
+.ProseMirror ul {
   list-style-type: disc;
   margin-top: 0;
   margin-bottom: 1rem;
@@ -357,7 +368,8 @@ textarea:focus-visible {
 }
 
 .blog-content ol,
-.blog-preview-content ol {
+.blog-preview-content ol,
+.ProseMirror ol {
   list-style-type: decimal;
   margin-top: 0;
   margin-bottom: 1rem;
@@ -366,13 +378,15 @@ textarea:focus-visible {
 }
 
 .blog-content li,
-.blog-preview-content li {
+.blog-preview-content li,
+.ProseMirror li {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
 }
 
 .blog-content pre,
-.blog-preview-content pre {
+.blog-preview-content pre,
+.ProseMirror pre {
   margin-top: 0;
   margin-bottom: 1rem;
   padding: 1rem;
@@ -383,7 +397,8 @@ textarea:focus-visible {
 }
 
 .blog-content code,
-.blog-preview-content code {
+.blog-preview-content code,
+.ProseMirror code {
   font-family: var(--font-mono), monospace;
   font-size: 0.875em;
   padding: 0.2em 0.4em;
@@ -394,7 +409,8 @@ textarea:focus-visible {
 
 /* Override code block styling to prevent double background */
 .blog-content pre code,
-.blog-preview-content pre code {
+.blog-preview-content pre code,
+.ProseMirror pre code {
   padding: 0;
   background: transparent;
   border: none;
@@ -402,7 +418,8 @@ textarea:focus-visible {
 }
 
 .blog-content img,
-.blog-preview-content img {
+.blog-preview-content img,
+.ProseMirror img {
   max-width: 100%;
   height: auto;
   border-radius: 0.75rem;
@@ -411,7 +428,8 @@ textarea:focus-visible {
 }
 
 .blog-content hr,
-.blog-preview-content hr {
+.blog-preview-content hr,
+.ProseMirror hr {
   height: 0.25em;
   padding: 0;
   margin: 1.5rem 0;
@@ -420,7 +438,8 @@ textarea:focus-visible {
 }
 
 .blog-content table,
-.blog-preview-content table {
+.blog-preview-content table,
+.ProseMirror table {
   width: 100%;
   margin-top: 0;
   margin-bottom: 1rem;
@@ -429,19 +448,47 @@ textarea:focus-visible {
 
 .blog-content table th,
 .blog-preview-content table th,
+.ProseMirror table th,
 .blog-content table td,
-.blog-preview-content table td {
+.blog-preview-content table td,
+.ProseMirror table td {
   padding: 6px 13px;
   border: 1px solid var(--glass-border);
 }
 
 .blog-content table tr,
-.blog-preview-content table tr {
+.blog-preview-content table tr,
+.ProseMirror table tr {
   background-color: transparent;
   border-top: 1px solid var(--glass-border);
 }
 
 .blog-content table tr:nth-child(2n),
-.blog-preview-content table tr:nth-child(2n) {
+.blog-preview-content table tr:nth-child(2n),
+.ProseMirror table tr:nth-child(2n) {
   background-color: var(--surface-secondary);
+}
+
+/* ─── ProseMirror / TipTap Specific Custom Styling ─── */
+.ProseMirror {
+  outline: none;
+  min-height: 450px;
+  width: 100%;
+}
+
+.ProseMirror p.is-empty::before {
+  color: var(--text-subtle);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.ProseMirror li p {
+  margin: 0;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 3px solid var(--focus-ring);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
 }

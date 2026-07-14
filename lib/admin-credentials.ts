@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import bcrypt from "bcryptjs";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getS3Client, isS3Configured } from "./s3-storage";
 
 export type AdminCredentials = {
   passwordHash: string;
@@ -8,23 +10,25 @@ export type AdminCredentials = {
 };
 
 const CREDENTIALS_PATH = path.join(process.cwd(), "config", "admin-credentials.json");
-const CREDENTIALS_BLOB_URL = process.env.ADMIN_CREDENTIALS_BLOB_URL?.trim();
+const S3_KEY = "config/admin-credentials.json";
 
 export function getAdminCredentialsPath(): string {
   return CREDENTIALS_PATH;
 }
 
 async function readCredentialsPayload(): Promise<string> {
-  if (CREDENTIALS_BLOB_URL) {
-    const response = await fetch(CREDENTIALS_BLOB_URL, { cache: "no-store" });
-
-    if (!response.ok) {
-      throw new Error(
-        `Unable to read admin credentials from blob URL (${response.status} ${response.statusText}).`
-      );
+  if (isS3Configured()) {
+    const client = getS3Client();
+    const bucket = process.env.AWS_S3_BUCKET!;
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: S3_KEY
+    });
+    const response = await client.send(command);
+    if (!response.Body) {
+      throw new Error("Credentials file body is empty in S3.");
     }
-
-    return response.text();
+    return response.Body.transformToString();
   }
 
   return fs.readFile(CREDENTIALS_PATH, "utf8");
@@ -45,8 +49,8 @@ export async function readAdminCredentials(): Promise<AdminCredentials> {
     };
   } catch (error) {
     throw new Error(
-      CREDENTIALS_BLOB_URL
-        ? `Admin credentials blob is missing or invalid at ${CREDENTIALS_BLOB_URL}. Make sure the Vercel Blob object contains the JSON payload with passwordHash and updatedAt.`
+      isS3Configured()
+        ? `Admin credentials are missing or invalid in S3 bucket (${process.env.AWS_S3_BUCKET}). Run npm run admin:set-password to create and upload them.`
         : `Admin credentials file is missing or invalid at ${CREDENTIALS_PATH}. Run npm run admin:set-password to create it locally.`
     );
   }

@@ -1,33 +1,39 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { list, put } from "@vercel/blob";
+import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getS3Client, isS3Configured } from "./s3-storage";
+import { unstable_noStore as noStore } from "next/cache";
 
 const SUBSCRIBERS_PATH = path.join(process.cwd(), "config", "subscribers.json");
-
-function isBlobConfigured(): boolean {
-  return !!process.env.BLOB_READ_WRITE_TOKEN;
-}
+const S3_KEY = "config/subscribers.json";
 
 async function ensureConfigDir() {
   await fs.mkdir(path.dirname(SUBSCRIBERS_PATH), { recursive: true });
 }
 
 export async function getSubscribers(): Promise<string[]> {
-  if (isBlobConfigured()) {
+  if (isS3Configured()) {
     try {
-      const { blobs } = await list();
-      const subscriberBlob = blobs.find((b) => b.pathname === "subscribers.json");
-      if (subscriberBlob) {
-        const response = await fetch(subscriberBlob.url, { cache: "no-store" });
-        if (response.ok) {
-          const listData = await response.json();
-          return Array.isArray(listData) ? listData : [];
-        }
+      noStore();
+      const client = getS3Client();
+      const bucket = process.env.AWS_S3_BUCKET!;
+      const command = new GetObjectCommand({
+        Bucket: bucket,
+        Key: S3_KEY
+      });
+      const response = await client.send(command);
+      if (response.Body) {
+        const raw = await response.Body.transformToString();
+        const listData = JSON.parse(raw);
+        return Array.isArray(listData) ? listData : [];
       }
-    } catch (e) {
-      console.error("Failed to read subscribers from Vercel Blob:", e);
+    } catch (e: any) {
+      if (e.name === "NoSuchKey" || e.name === "NotFound" || e.$metadata?.httpStatusCode === 404) {
+        return [];
+      }
+      console.error("Failed to read subscribers from S3:", e);
     }
-    return []; // Bypass local filesystem read when Vercel Blob is active
+    return []; // Bypass local filesystem read when S3 is active
   }
 
   // Local fallback
@@ -46,16 +52,22 @@ export async function addSubscriber(email: string): Promise<boolean> {
 
   listData.push(email);
 
-  if (isBlobConfigured()) {
+  if (isS3Configured()) {
     try {
-      await put("subscribers.json", JSON.stringify(listData), {
-        access: "public",
-        addRandomSuffix: false
+      noStore();
+      const client = getS3Client();
+      const bucket = process.env.AWS_S3_BUCKET!;
+      const command = new PutObjectCommand({
+        Bucket: bucket,
+        Key: S3_KEY,
+        Body: JSON.stringify(listData, null, 2),
+        ContentType: "application/json"
       });
-      return true; // Return immediately to bypass local filesystem write when Vercel Blob is active
+      await client.send(command);
+      return true; // Return immediately to bypass local filesystem write when S3 is active
     } catch (e) {
-      console.error("Failed to write subscribers to Vercel Blob:", e);
-      throw new Error("Unable to save subscriber to Vercel Blob.");
+      console.error("Failed to write subscribers to S3:", e);
+      throw new Error("Unable to save subscriber to S3.");
     }
   }
 

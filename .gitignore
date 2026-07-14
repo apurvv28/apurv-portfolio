@@ -2,3 +2,5 @@ node_modules/
 .next/
 config/admin-credentials.json
 .env
+.vercel
+.env*.local
