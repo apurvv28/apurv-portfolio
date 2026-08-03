@@ -3,7 +3,6 @@ import { DM_Sans, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import Script from "next/script";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import SmoothScroll from "@/components/SmoothScroll";
 import AnimatedCursor from "@/components/AnimatedCursor";
 import Providers from "@/components/Providers";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -76,7 +75,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       >
         <Providers>
           <AnimatedCursor />
-          <SmoothScroll />
           <ThemeToggle />
           <Header />
           <main className="relative z-content">{children}</main>

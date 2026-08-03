@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useRef } from "react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { SPACE_ASSETS, spaceImageClass } from "@/lib/space-assets";
 
@@ -12,13 +11,6 @@ type Star = {
   size: number;
   opacity: number;
   depth: number;
-};
-
-type ShootingStar = {
-  id: number;
-  top: number;
-  left: number;
-  delay: number;
 };
 
 const STAR_COUNT = 180;
@@ -34,27 +26,13 @@ function createStars(width: number, height: number): Star[] {
 }
 
 function BackgroundAstronaut({ opacity }: { opacity: number }): JSX.Element {
-  const reducedMotion = useReducedMotion();
-
   return (
-    <motion.div
-      className="pointer-events-none absolute right-[6%] top-[16%] hidden md:block lg:right-[10%] lg:top-[20%]"
+    <div
+      className="pointer-events-none absolute right-[6%] top-[16%] hidden opacity-70 md:block lg:right-[10%] lg:top-[20%]"
       style={{ opacity }}
       aria-hidden="true"
     >
-      <motion.div
-        className="relative h-36 w-28 lg:h-48 lg:w-36"
-        animate={
-          reducedMotion
-            ? undefined
-            : { y: [0, -18, 0], rotate: [-2, 2, -2] }
-        }
-        transition={
-          reducedMotion
-            ? undefined
-            : { duration: 10, repeat: Infinity, ease: "easeInOut" }
-        }
-      >
+      <div className="relative h-36 w-28 lg:h-48 lg:w-36">
         <Image
           src={SPACE_ASSETS.astronautSecondary}
           alt=""
@@ -62,22 +40,15 @@ function BackgroundAstronaut({ opacity }: { opacity: number }): JSX.Element {
           className={`object-contain object-center ${spaceImageClass}`}
           sizes="192px"
         />
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 
 export default function SpaceBackground(): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const starsRef = useRef<Star[]>([]);
-  const scrollRef = useRef(0);
-  const mouseRef = useRef({ x: 0, y: 0 });
-  const frameRef = useRef<number>(0);
   const { theme, mounted } = useTheme();
-  const reducedMotion = useReducedMotion();
-  const [shootingStars, setShootingStars] = useState<ShootingStar[]>([]);
-  const [astronautOpacity, setAstronautOpacity] = useState(0.08);
-  const shootingIdRef = useRef(0);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -88,30 +59,19 @@ export default function SpaceBackground(): JSX.Element {
     const { width, height } = canvas;
     ctx.clearRect(0, 0, width, height);
 
-    const scrollOffset = reducedMotion ? 0 : scrollRef.current * 0.15;
-    const mouseX = reducedMotion ? 0 : mouseRef.current.x * 0.02;
-    const mouseY = reducedMotion ? 0 : mouseRef.current.y * 0.02;
-
     const starColor = getComputedStyle(document.documentElement)
       .getPropertyValue("--star-color")
       .trim();
 
     for (const star of starsRef.current) {
-      const parallaxX = mouseX * star.depth + scrollOffset * star.depth * 0.3;
-      const parallaxY = mouseY * star.depth + scrollOffset * star.depth * 0.15;
-      let x = (star.x + parallaxX) % width;
-      let y = (star.y + parallaxY) % height;
-      if (x < 0) x += width;
-      if (y < 0) y += height;
-
       ctx.beginPath();
-      ctx.arc(x, y, star.size, 0, Math.PI * 2);
+      ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
       ctx.fillStyle = starColor || "rgba(255,255,255,0.7)";
       ctx.globalAlpha = star.opacity;
       ctx.fill();
     }
     ctx.globalAlpha = 1;
-  }, [reducedMotion]);
+  }, []);
 
   const resize = useCallback(() => {
     const canvas = canvasRef.current;
@@ -136,80 +96,8 @@ export default function SpaceBackground(): JSX.Element {
   }, [resize]);
 
   useEffect(() => {
-    if (reducedMotion) {
-      draw();
-      return;
-    }
-
-    const onScroll = (): void => {
-      scrollRef.current = window.scrollY;
-    };
-    const onMouse = (e: MouseEvent): void => {
-      mouseRef.current = {
-        x: e.clientX - window.innerWidth / 2,
-        y: e.clientY - window.innerHeight / 2
-      };
-    };
-
-    const loop = (): void => {
-      draw();
-      frameRef.current = requestAnimationFrame(loop);
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("mousemove", onMouse, { passive: true });
-    frameRef.current = requestAnimationFrame(loop);
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("mousemove", onMouse);
-      cancelAnimationFrame(frameRef.current);
-    };
-  }, [draw, reducedMotion]);
-
-  useEffect(() => {
     draw();
   }, [theme, mounted, draw]);
-
-  useEffect(() => {
-    if (reducedMotion) return;
-
-    const spawn = (): void => {
-      const id = shootingIdRef.current++;
-      const star: ShootingStar = {
-        id,
-        top: Math.random() * 60 + 5,
-        left: Math.random() * 50 + 40,
-        delay: 0
-      };
-      setShootingStars((prev) => [...prev.slice(-3), star]);
-      window.setTimeout(() => {
-        setShootingStars((prev) => prev.filter((s) => s.id !== id));
-      }, 1400);
-    };
-
-    spawn();
-    const interval = window.setInterval(spawn, 6000 + Math.random() * 8000);
-    return () => clearInterval(interval);
-  }, [reducedMotion]);
-
-  useEffect(() => {
-    const hero = document.getElementById("home");
-    const about = document.getElementById("about");
-    if (!hero && !about) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.some((e) => e.isIntersecting);
-        setAstronautOpacity(visible ? 0.12 : 0.05);
-      },
-      { threshold: 0.15 }
-    );
-
-    if (hero) observer.observe(hero);
-    if (about) observer.observe(about);
-    return () => observer.disconnect();
-  }, []);
 
   return (
     <div
@@ -225,7 +113,6 @@ export default function SpaceBackground(): JSX.Element {
         }}
       />
 
-      {/* Distant planet */}
       <div className="absolute -right-[8%] top-[8%] hidden opacity-[0.07] dark:opacity-[0.12] lg:block">
         <Image
           src={SPACE_ASSETS.planet}
@@ -237,23 +124,7 @@ export default function SpaceBackground(): JSX.Element {
       </div>
 
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
-
-      {!reducedMotion &&
-        shootingStars.map((star) => (
-          <div
-            key={star.id}
-            className="absolute h-px w-24 origin-right animate-shooting-star"
-            style={{
-              top: `${star.top}%`,
-              left: `${star.left}%`,
-              background:
-                "linear-gradient(90deg, transparent, var(--shooting-star), transparent)",
-              transform: "rotate(-25deg)"
-            }}
-          />
-        ))}
-
-      <BackgroundAstronaut opacity={astronautOpacity} />
+      <BackgroundAstronaut opacity={0.12} />
     </div>
   );
 }
